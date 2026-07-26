@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>单元2·第3节 · 智能识别文字｜人工智能创作与机器感知互动实验室</title>
+<style>
+:root{
+  --ocean-deep:#071e32;--ocean:#0a2540;--ocean-mid:#0d3b66;--teal:#1a8a8a;--teal-bright:#2bb5b5;
+  --orange:#f0a020;--orange-warn:#e67e22;--panel:#0f2d4a;--panel2:#133556;--text:#e8f4f8;
+  --muted:#8ab4c8;--line:rgba(43,181,181,.35);--ok:#3dcc8c;--bad:#e85d5d;--radius:12px;
+  --font:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;font-family:var(--font);background:var(--ocean-deep);color:var(--text)}
+body{background:
+  radial-gradient(ellipse 80% 50% at 15% -10%,rgba(26,138,138,.28),transparent 55%),
+  radial-gradient(ellipse 55% 40% at 95% 5%,rgba(240,160,32,.12),transparent 50%),
+  linear-gradient(180deg,#061828 0%,var(--ocean-deep) 40%,#0a2a44 100%)}
+.topbar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+  padding:10px 14px;background:rgba(7,30,50,.92);border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--teal),var(--ocean-mid));
+  display:grid;place-items:center}
+.brand h1{font-size:15px;font-weight:700}.brand p{font-size:11px;color:var(--muted)}
+.nav-btn{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:7px 11px;border-radius:8px;font:inherit;font-size:12px;cursor:pointer}
+.nav-btn:hover{border-color:var(--teal-bright)}
+.nav-btn.primary{background:linear-gradient(135deg,var(--teal),#147070);border-color:transparent}
+.nav-btn.warn{border-color:rgba(240,160,32,.5);color:var(--orange)}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 14px 48px}
+.hero{padding:18px 0 10px}
+.hero .tag{display:inline-block;font-size:11px;color:var(--orange);border:1px solid rgba(240,160,32,.45);padding:3px 10px;border-radius:999px;margin-bottom:8px}
+.hero h2{font-size:clamp(22px,3vw,30px);margin-bottom:6px}
+.hero p{color:var(--muted);font-size:14px;max-width:760px;line-height:1.6}
+.privacy{font-size:11px;color:var(--orange);margin-top:8px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 14px;padding:6px;background:rgba(15,45,74,.65);border:1px solid var(--line);border-radius:14px}
+.tab{flex:1;min-width:110px;padding:10px 8px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
+.tab.active{background:linear-gradient(135deg,rgba(26,138,138,.55),rgba(13,59,102,.8));color:#fff}
+.panel{display:none;animation:fade .25s ease}.panel.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.grid{display:grid;gap:14px}.grid-2{grid-template-columns:1.15fr .85fr}
+@media(max-width:860px){.grid-2{grid-template-columns:1fr}}
+.card{background:linear-gradient(160deg,rgba(15,45,74,.95),rgba(10,37,64,.92));border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.card h3{font-size:16px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.card h3 .n{width:22px;height:22px;border-radius:6px;background:var(--orange);color:#1a1200;font-size:12px;display:grid;place-items:center;font-weight:800}
+.card .desc{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:12px}
+.pipeline{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px}
+.pipe-step{padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:rgba(7,30,50,.55);font-size:12px;transition:.2s;min-width:72px;text-align:center}
+.pipe-step.on{background:rgba(26,138,138,.35);border-color:var(--teal-bright);color:#fff;box-shadow:0 0 0 1px rgba(43,181,181,.4)}
+.pipe-step.done{border-color:var(--ok);color:var(--ok)}
+.pipe-arrow{color:var(--muted);font-size:12px}
+.stage-view{min-height:200px;border-radius:10px;border:1px dashed var(--line);background:rgba(7,30,50,.5);display:flex;align-items:center;justify-content:center;padding:12px}
+.sliders{display:grid;gap:10px}
+.slider-row label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px}
+.slider-row input[type=range]{width:100%;accent-color:var(--teal-bright)}
+.btn{border:0;border-radius:8px;padding:9px 14px;font:inherit;font-size:13px;cursor:pointer;background:linear-gradient(135deg,var(--teal),#147070);color:#fff}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+.btn.orange{background:linear-gradient(135deg,var(--orange),var(--orange-warn));color:#1a1200;font-weight:700}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.feedback{margin-top:12px;padding:12px;border-radius:10px;background:rgba(26,138,138,.12);border:1px solid var(--line);font-size:13px;line-height:1.6;min-height:48px}
+.feedback.bad{background:rgba(232,93,93,.12);border-color:rgba(232,93,93,.35)}
+.feedback.ok{background:rgba(61,204,140,.12);border-color:rgba(61,204,140,.35)}
+.hint{font-size:12px;color:var(--orange);margin-top:8px}
+.task-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:720px){.task-grid{grid-template-columns:1fr}}
+.task{border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer;background:rgba(7,30,50,.45)}
+.task.on,.task:hover{border-color:var(--teal-bright);background:rgba(26,138,138,.15)}
+.task .t{font-weight:700;font-size:13px;margin-bottom:6px}
+.preview-box{background:#f4f7fa;color:#122;border-radius:8px;padding:14px;min-height:80px;font-size:18px;letter-spacing:.04em;text-align:center;position:relative;overflow:hidden}
+.preview-box.hand{font-family:"KaiTi","STKaiti","Songti SC",serif;font-size:22px;transform:rotate(-2deg)}
+.plate{display:inline-block;background:linear-gradient(180deg,#2d6cdf,#1a4fb0);color:#fff;border:3px solid #f5f5f5;
+  border-radius:6px;padding:8px 14px;font-weight:800;letter-spacing:.12em;font-size:20px;text-shadow:0 1px 0 #0003}
+.error-list{display:grid;gap:8px}
+.error-item{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px;border:1px solid var(--line);border-radius:8px;background:rgba(7,30,50,.4);font-size:13px}
+.error-item input,.error-item select{padding:6px 8px;border-radius:6px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:640px){.compare{grid-template-columns:1fr}}
+.metric{background:rgba(7,30,50,.55);border-radius:8px;padding:12px;border:1px solid var(--line)}
+.metric b{display:block;font-size:22px;color:var(--teal-bright);margin:4px 0}
+.metric span{font-size:12px;color:var(--muted)}
+.report{white-space:pre-wrap;font-size:13px;line-height:1.65;background:rgba(7,30,50,.55);border-radius:10px;padding:14px;border:1px solid var(--line);max-height:360px;overflow:auto}
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal-mask.show{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:560px;width:100%;padding:18px;max-height:85vh;overflow:auto}
+.modal h3{margin-bottom:8px}.modal li{font-size:13px;color:var(--muted);line-height:1.6;margin:4px 0}
+.modal ul{padding-left:18px;margin:8px 0}
+.toast{position:fixed;right:16px;bottom:16px;background:var(--panel2);border:1px solid var(--teal-bright);color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;z-index:120;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);text-align:center}
+.log{font-size:12px;color:var(--muted);max-height:140px;overflow:auto;margin-top:8px}
+.log div{padding:3px 0;border-bottom:1px dashed rgba(138,180,200,.2)}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#2bb5b5" stroke-width="1.5"/><path d="M7 10h6M7 14h10" stroke="#e8f4f8" stroke-width="1.6" stroke-linecap="round"/><circle cx="18" cy="10" r="1.3" fill="#f0a020"/></svg>
+    </div>
+    <div>
+      <h1>智能识别文字 · OCR 流水线实验室</h1>
+      <p>单元2 第3节 · P50-55 · 虚构车牌/合成文本 · 离线仿真</p>
+    </div>
+  </div>
+  <button class="nav-btn primary" id="btnSave">保存</button>
+  <button class="nav-btn" id="btnExport">导出</button>
+  <button class="nav-btn" id="btnImport">导入</button>
+  <button class="nav-btn" id="btnFS">全屏</button>
+  <button class="nav-btn warn" id="btnReset">重置</button>
+  <button class="nav-btn" id="btnHelp">帮助</button>
+  <input type="file" id="importFile" accept="application/json,.json" hidden/>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <span class="tag">机器感知 · OCR 文字识别</span>
+    <h2>文字识别流水线 + 车牌与手写体实验室</h2>
+    <p>动画演示 OCR 六步流水线；调节清晰度、反光、倾斜等因素观察准确率；完成书脊标签、手写体与虚构车牌识别；注入错误并修复；对比人工录入与 OCR 效率后导出日志。</p>
+    <p class="privacy">隐私声明：车牌与文本均为教学虚构（如 鲁A·D8K27），不采集真实车牌或隐私资料，禁止上传真实证件/车牌照片。</p>
+  </section>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="m1">① OCR流水线</button>
+    <button class="tab" data-tab="m2">② 条件滑块</button>
+    <button class="tab" data-tab="m3">③ 识别任务</button>
+    <button class="tab" data-tab="m4">④ 错误修复</button>
+    <button class="tab" data-tab="m5">⑤ 人机对比导出</button>
+  </nav>
+
+  <section class="panel active" id="m1">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="n">1</span>OCR 流水线动画</h3>
+        <p class="desc">使用运行 / 暂停 / 单步 / 重置控制六阶段：采集→预处理→区域定位→字符分割→字符识别→输出。</p>
+        <div class="pipeline" id="pipeUI"></div>
+        <div class="stage-view" id="stageView"></div>
+        <div class="btn-row">
+          <button class="btn" id="btnRun">运行</button>
+          <button class="btn ghost" id="btnPause">暂停</button>
+          <button class="btn ghost" id="btnStep">单步</button>
+          <button class="btn ghost" id="btnPipeReset">重置流水线</button>
+        </div>
+        <div class="feedback" id="pipeFeedback">点击“运行”或“单步”观察各阶段处理效果（合成画面）。</div>
+      </div>
+      <div class="card">
+        <h3>阶段说明</h3>
+        <div class="feedback" id="stageExplain" style="margin-top:0">等待开始…</div>
+        <div class="log" id="pipeLog"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="m2">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="n">2</span>成像条件 → 准确率</h3>
+        <p class="desc">拖动滑块模拟清晰度、反光、倾斜、字号、字距与背景复杂度，观察规则仿真准确率与解释。</p>
+        <div class="sliders" id="ocrSliders"></div>
+        <div class="btn-row">
+          <button class="btn" id="btnEvalCond">评估识别准确率</button>
+          <button class="btn ghost" id="btnRandCond">随机条件</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>预览与解释</h3>
+        <div class="preview-box" id="condPreview">人工智能通识</div>
+        <div class="feedback" id="condFeedback">调节条件后点击评估。</div>
+        <p class="hint" id="condHint">提示：反光与大倾斜最容易破坏字符结构。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="m3">
+    <div class="card">
+      <h3><span class="n">3</span>书脊 / 手写 / 虚构车牌任务</h3>
+      <p class="desc">选择内置合成样本，输入你的识别结果（或一键 OCR 仿真），对照标准答案。</p>
+      <div class="task-grid" id="taskGrid"></div>
+      <div style="margin-top:14px" class="grid grid-2">
+        <div>
+          <div id="taskPreview" class="preview-box">请选择任务</div>
+          <div class="btn-row">
+            <button class="btn" id="btnOcrSim">OCR 仿真识别</button>
+            <button class="btn ghost" id="btnReveal">显示标准答案</button>
+          </div>
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--muted)">你的识别结果</label>
+          <input id="taskAnswer" style="width:100%;margin:6px 0;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit"/>
+          <div class="btn-row" style="margin-top:0">
+            <button class="btn orange" id="btnCheckTask">提交检验</button>
+          </div>
+          <div class="feedback" id="taskFeedback">选择任务后作答。</div>
+          <p class="hint" id="taskHint"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="m4">
+    <div class="card">
+      <h3><span class="n">4</span>注入错误 · 学生修复</h3>
+      <p class="desc">系统注入字符误读、顺序错乱、区域漏检三类错误，请你修正后提交。</p>
+      <div class="btn-row" style="margin-top:0">
+        <button class="btn" id="btnInject">注入一组错误</button>
+        <button class="btn ghost" id="btnInjectReset">清空</button>
+      </div>
+      <div class="error-list" id="errorList" style="margin-top:12px"></div>
+      <div class="btn-row">
+        <button class="btn orange" id="btnFixSubmit">提交修复</button>
+      </div>
+      <div class="feedback" id="fixFeedback">点击“注入一组错误”开始。</div>
+      <p class="hint" id="fixHint"></p>
+    </div>
+  </section>
+
+  <section class="panel" id="m5">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="n">5</span>人工录入 vs OCR</h3>
+        <p class="desc">模拟录入一段虚构文本，对比耗时与错误；生成改进建议并导出识别日志。</p>
+        <div class="preview-box" style="font-size:15px;text-align:left" id="humanSrc">鲁A·D8K27 通过虚拟卡口，时间 09:15，通道 B2（教学虚构数据）</div>
+        <label style="font-size:12px;color:var(--muted);display:block;margin-top:10px">人工录入区（请完整抄写上方文本）</label>
+        <textarea id="humanInput" rows="3" style="width:100%;margin-top:6px;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit"></textarea>
+        <div class="btn-row">
+          <button class="btn" id="btnHumanStart">开始计时并录入</button>
+          <button class="btn ghost" id="btnHumanDone">完成录入</button>
+          <button class="btn orange" id="btnOcrRace">一键 OCR 仿真</button>
+        </div>
+        <div class="compare" style="margin-top:12px">
+          <div class="metric"><span>人工耗时 / 正确率</span><b id="mHuman">—</b></div>
+          <div class="metric"><span>OCR 耗时 / 正确率</span><b id="mOcr">—</b></div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>识别日志与改进建议</h3>
+        <div class="btn-row" style="margin-top:0">
+          <button class="btn" id="btnGenLog">生成日志与建议</button>
+          <button class="btn ghost" id="btnExportLog">导出</button>
+        </div>
+        <div class="report" id="finalLog" style="margin-top:10px">完成对比后生成导出内容。</div>
+      </div>
+    </div>
+  </section>
+  <footer>山东教育出版社《人工智能通识·第一册》· 单元2 第3节 · 离线互动实验 · 虚构数据</footer>
+</main>
+
+<div class="modal-mask" id="helpModal">
+  <div class="modal">
+    <h3>使用帮助</h3>
+    <ul>
+      <li>流水线支持运行、暂停、单步与重置，便于课堂逐步讲解。</li>
+      <li>任务中的车牌均为虚构样式（如 鲁A·D8K27），请勿使用真实车牌。</li>
+      <li>保存写入 localStorage；导出/导入使用 JSON；可导出识别日志文本。</li>
+      <li>任务循环：操作→反馈→提示→重试→输出。</li>
+    </ul>
+    <div class="btn-row"><button class="btn" id="helpClose">知道了</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+const KEY='lab_u2_s3_ocr_v1';
+const STEPS=[
+  {id:'cap',name:'采集',explain:'摄像头/扫描仪获取图像（本实验为合成图）。',draw:'capture'},
+  {id:'pre',name:'预处理',explain:'灰度、去噪、对比度增强，减轻反光与模糊影响。',draw:'pre'},
+  {id:'loc',name:'区域定位',explain:'找到文本行/车牌候选框。',draw:'loc'},
+  {id:'seg',name:'字符分割',explain:'将文本行切分为单字符块。',draw:'seg'},
+  {id:'rec',name:'字符识别',explain:'分类器输出每个字符类别。',draw:'rec'},
+  {id:'out',name:'输出',explain:'拼成字符串并做规则校验（如车牌格式）。',draw:'out'}
+];
+const state={
+  pipeIdx:-1,running:false,timer:null,logs:[],
+  cond:{clarity:75,glare:15,tilt:5,fontSize:60,spacing:50,bg:30},
+  taskId:'spine1',taskScore:0,taskTries:0,
+  fixes:[],fixScore:0,
+  human:{start:null,ms:null,acc:null},ocr:{ms:null,acc:null},
+  exportText:''
+};
+
+const TASKS=[
+  {id:'spine1',type:'spine',title:'书脊标签',truth:'人工智能通识·第一册',show:'人工智能通识·第一册',cls:''},
+  {id:'spine2',type:'spine',title:'书脊（竖排仿真）',truth:'机器感知入门',show:'机 器 感 知 入 门',cls:''},
+  {id:'hand1',type:'hand',title:'手写体样本',truth:'今天天气不错',show:'今天天气不错',cls:'hand'},
+  {id:'hand2',type:'hand',title:'手写体样本2',truth:'学习OCR原理',show:'学习OCR原理',cls:'hand'},
+  {id:'plate1',type:'plate',title:'虚构车牌A',truth:'鲁A·D8K27',show:'鲁A·D8K27',cls:'plate'},
+  {id:'plate2',type:'plate',title:'虚构车牌B',truth:'鲁B·F3M19',show:'鲁B·F3M19',cls:'plate'}
+];
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1800);}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d)Object.assign(state,d,{running:false,timer:null});}catch(e){}}
+
+function renderPipeUI(){
+  const box=document.getElementById('pipeUI');
+  box.innerHTML=STEPS.map((s,i)=>`<div class="pipe-step" data-i="${i}" id="ps${i}">${s.name}</div>${i<STEPS.length-1?'<span class="pipe-arrow">→</span>':''}`).join('');
+}
+function drawStage(kind){
+  const el=document.getElementById('stageView');
+  const c=state.cond;
+  const blur=(100-c.clarity)/8;
+  const rot=c.tilt;
+  const glare=c.glare;
+  if(kind==='idle'){
+    el.innerHTML=`<svg width="280" height="160" viewBox="0 0 280 160"><rect width="280" height="160" rx="10" fill="#0a2540"/><text x="140" y="84" text-anchor="middle" fill="#8ab4c8" font-size="14">等待流水线启动</text></svg>`;
+    return;
+  }
+  const text=kind==='out'?'鲁A·D8K27':'鲁A D8K27';
+  el.innerHTML=`<svg width="300" height="170" viewBox="0 0 300 170">
+    <defs><linearGradient id="gl" x1="0" x2="1"><stop offset="0%" stop-color="#fff" stop-opacity="0"/><stop offset="50%" stop-color="#fff" stop-opacity="${glare/120}"/><stop offset="100%" stop-color="#fff" stop-opacity="0"/></linearGradient></defs>
+    <rect width="300" height="170" rx="10" fill="#102a44"/>
+    <g transform="rotate(${kind==='pre'||kind==='cap'?rot:0} 150 85)" style="filter:blur(${kind==='cap'?blur:Math.max(0,blur-1)}px)">
+      <rect x="40" y="55" width="220" height="55" rx="6" fill="${kind==='pre'?'#9aa':'#2d6cdf'}" stroke="#eee" stroke-width="3"/>
+      <text x="150" y="90" text-anchor="middle" fill="#fff" font-size="22" font-weight="700" letter-spacing="4">${kind==='seg'||kind==='rec'||kind==='out'?text:'SAMPLE'}</text>
+      ${kind==='loc'?`<rect x="38" y="53" width="224" height="59" fill="none" stroke="#f0a020" stroke-width="2" stroke-dasharray="6 4"/>`:''}
+      ${kind==='seg'?[0,1,2,3,4,5,6,7].map(i=>`<line x1="${55+i*24}" y1="58" x2="${55+i*24}" y2="105" stroke="#2bb5b5" stroke-width="1.5"/>`).join(''):''}
+      ${kind==='rec'?`<text x="150" y="130" text-anchor="middle" fill="#3dcc8c" font-size="12">分类置信度仿真 0.91</text>`:''}
+      ${kind==='out'?`<text x="150" y="130" text-anchor="middle" fill="#f0a020" font-size="12">输出：鲁A·D8K27（虚构）</text>`:''}
+    </g>
+    <rect x="40" y="40" width="220" height="90" fill="url(#gl)"/>
+  </svg>`;
+}
+function setPipeStep(i){
+  state.pipeIdx=i;
+  STEPS.forEach((_,idx)=>{
+    const el=document.getElementById('ps'+idx);
+    el.classList.toggle('on',idx===i);
+    el.classList.toggle('done',idx<i);
+  });
+  if(i<0){drawStage('idle');document.getElementById('stageExplain').textContent='等待开始…';return;}
+  const s=STEPS[i];
+  drawStage(s.draw);
+  document.getElementById('stageExplain').textContent=`【${s.name}】${s.explain}`;
+  const line=`步骤${i+1} ${s.name}：完成`;
+  state.logs.push(line);
+  document.getElementById('pipeLog').innerHTML=state.logs.slice(-10).map(x=>`<div>${x}</div>`).join('');
+  document.getElementById('pipeFeedback').className='feedback ok';
+  document.getElementById('pipeFeedback').textContent=`当前阶段：${s.name}`;
+  persist();
+}
+function pipeNext(){
+  if(state.pipeIdx>=STEPS.length-1){
+    pausePipe();
+    document.getElementById('pipeFeedback').textContent='流水线完成：已输出识别字符串（仿真）。';
+    return;
+  }
+  setPipeStep(state.pipeIdx+1);
+}
+function runPipe(){
+  if(state.running)return;
+  state.running=true;
+  if(state.pipeIdx<0)setPipeStep(0);
+  state.timer=setInterval(pipeNext,900);
+}
+function pausePipe(){state.running=false;if(state.timer){clearInterval(state.timer);state.timer=null;}}
+function resetPipe(){pausePipe();state.logs=[];document.getElementById('pipeLog').innerHTML='';setPipeStep(-1);document.getElementById('pipeFeedback').className='feedback';document.getElementById('pipeFeedback').textContent='流水线已重置。';persist();}
+
+function renderSliders(){
+  const conf=[['clarity','清晰度',0,100],['glare','反光',0,100],['tilt','倾斜角',0,45],['fontSize','字号',20,100],['spacing','字距',0,100],['bg','背景复杂度',0,100]];
+  const box=document.getElementById('ocrSliders');
+  box.innerHTML=conf.map(([k,l,a,b])=>`<div class="slider-row"><label><span>${l}</span><span id="cv_${k}">${state.cond[k]}</span></label>
+    <input type="range" min="${a}" max="${b}" value="${state.cond[k]}" data-k="${k}"/></div>`).join('');
+  box.querySelectorAll('input').forEach(inp=>{
+    inp.oninput=()=>{state.cond[inp.dataset.k]=+inp.value;document.getElementById('cv_'+inp.dataset.k).textContent=inp.value;updateCondPreview();persist();};
+  });
+}
+function updateCondPreview(){
+  const c=state.cond;const el=document.getElementById('condPreview');
+  el.textContent='人工智能通识';
+  el.style.filter=`blur(${(100-c.clarity)/30}px)`;
+  el.style.transform=`rotate(${c.tilt}deg)`;
+  el.style.fontSize=(12+c.fontSize/5)+'px';
+  el.style.letterSpacing=(c.spacing/40)+'em';
+  el.style.background=`linear-gradient(135deg,#f4f7fa ${100-c.bg}%,#c5d0da)`;
+  el.style.boxShadow=c.glare>40?`inset ${c.glare}px 0 40px rgba(255,255,255,.55)`:'none';
+}
+function evalCond(){
+  const c=state.cond;
+  let acc=0.96;
+  acc-=(100-c.clarity)/100*0.35;
+  acc-=c.glare/100*0.4;
+  acc-=c.tilt/45*0.3;
+  acc-=Math.abs(c.fontSize-55)/55*0.12;
+  acc-=Math.abs(c.spacing-50)/50*0.1;
+  acc-=c.bg/100*0.18;
+  acc=Math.max(0.08,Math.min(0.99,acc));
+  const reasons=[];
+  if(c.clarity<45)reasons.push('清晰度不足导致笔画黏连');
+  if(c.glare>50)reasons.push('反光淹没高光区字符');
+  if(c.tilt>20)reasons.push('倾斜增大分割误差');
+  if(c.fontSize<35)reasons.push('字号过小，细节丢失');
+  if(c.spacing<25)reasons.push('字距过密，分割困难');
+  if(c.bg>60)reasons.push('复杂背景干扰区域定位');
+  if(!reasons.length)reasons.push('条件良好，残差主要来自类别相似字符');
+  const fb=document.getElementById('condFeedback');
+  fb.className='feedback ok';
+  fb.textContent=`估计识别准确率约 ${Math.round(acc*100)}%。主要影响因素：${reasons.join('；')}。`;
+  document.getElementById('condHint').textContent=acc<0.7?'重试建议：降低反光与倾斜，提高清晰度，简化背景。':'当前条件较适合 OCR，可尝试更难样本。';
+  state.logs.push(`条件评估准确率 ${Math.round(acc*100)}%`);
+  persist();
+}
+
+function renderTasks(){
+  const box=document.getElementById('taskGrid');
+  box.innerHTML=TASKS.map(t=>`<div class="task ${state.taskId===t.id?'on':''}" data-id="${t.id}"><div class="t">${t.title}</div><div style="font-size:12px;color:var(--muted)">${t.type==='plate'?'虚构车牌':t.type==='hand'?'手写体':'书脊标签'}</div></div>`).join('');
+  box.querySelectorAll('.task').forEach(el=>el.onclick=()=>{state.taskId=el.dataset.id;showTask();persist();});
+}
+function showTask(){
+  renderTasks();
+  const t=TASKS.find(x=>x.id===state.taskId);
+  const pv=document.getElementById('taskPreview');
+  pv.className='preview-box '+(t.cls||'');
+  if(t.type==='plate'){pv.innerHTML=`<span class="plate">${t.show}</span><div style="font-size:11px;color:#666;margin-top:8px">教学虚构车牌，非真实号牌</div>`;}
+  else pv.textContent=t.show;
+  document.getElementById('taskAnswer').value='';
+  document.getElementById('taskFeedback').className='feedback';
+  document.getElementById('taskFeedback').textContent='请识别并输入结果，或使用 OCR 仿真。';
+  document.getElementById('taskHint').textContent='';
+}
+function ocrSimTask(){
+  const t=TASKS.find(x=>x.id===state.taskId);
+  const c=state.cond;
+  let out=t.truth;
+  if(c.glare>60||c.clarity<40){
+    out=out.replace('D','0').replace('8','B').replace('通','道');
+  }
+  if(c.tilt>25)out=out.split('').reverse().join('');
+  document.getElementById('taskAnswer').value=out;
+  document.getElementById('taskFeedback').textContent='OCR 仿真已填入结果（可能含误差），请检验或手工修正。';
+}
+function checkTask(){
+  const t=TASKS.find(x=>x.id===state.taskId);
+  const ans=document.getElementById('taskAnswer').value.trim().replace(/\s+/g,'');
+  const truth=t.truth.replace(/\s+/g,'');
+  state.taskTries++;
+  const fb=document.getElementById('taskFeedback');
+  if(ans===truth){
+    state.taskScore++;
+    fb.className='feedback ok';fb.textContent='识别正确！';
+    document.getElementById('taskHint').textContent='';
+  }else{
+    fb.className='feedback bad';fb.textContent='与标准答案不一致，请重试或查看提示。';
+    document.getElementById('taskHint').textContent=t.type==='plate'?'提示：省份简称+字母+间隔点+字母数字组合，注意 0/D、8/B 易混。':'提示：注意标点与间隔，手写体可先按字形临摹。';
+  }
+  persist();
+}
+
+function injectErrors(){
+  state.fixes=[
+    {type:'misread',label:'字符误读',raw:'鲁A·DBK27',truth:'鲁A·D8K27',hint:'数字 8 被误读为 B'},
+    {type:'order',label:'顺序错乱',raw:'识知感知机器',truth:'机器感知识别',hint:'分割后拼接顺序错误'},
+    {type:'miss',label:'区域漏检',raw:'人工智能通识',truth:'人工智能通识·第一册',hint:'副标题区域未被定位'}
+  ];
+  renderFixes();
+  document.getElementById('fixFeedback').className='feedback';
+  document.getElementById('fixFeedback').textContent='已注入 3 类错误，请逐条修复。';
+  document.getElementById('fixHint').textContent='';
+  persist();
+}
+function renderFixes(){
+  const box=document.getElementById('errorList');
+  if(!state.fixes.length){box.innerHTML='<p style="font-size:13px;color:var(--muted)">暂无错误条目</p>';return;}
+  box.innerHTML=state.fixes.map((f,i)=>`<div class="error-item">
+    <div><strong>${f.label}</strong><div style="color:var(--muted);margin-top:4px">OCR输出：${f.raw}</div>
+    <input data-i="${i}" placeholder="输入修复结果" value="${f.user||''}"/></div>
+    <span style="font-size:11px;color:var(--orange)">待修</span>
+  </div>`).join('');
+  box.querySelectorAll('input').forEach(inp=>{
+    inp.oninput=()=>{state.fixes[+inp.dataset.i].user=inp.value;persist();};
+  });
+}
+function submitFixes(){
+  if(!state.fixes.length){toast('请先注入错误');return;}
+  let ok=0;
+  state.fixes.forEach(f=>{
+    const u=(f.user||'').trim();
+    if(u===f.truth)ok++;
+  });
+  const fb=document.getElementById('fixFeedback');
+  if(ok===state.fixes.length){
+    state.fixScore++;
+    fb.className='feedback ok';fb.textContent=`全部修复正确（${ok}/${state.fixes.length}）！`;
+    document.getElementById('fixHint').textContent='';
+  }else{
+    fb.className='feedback bad';fb.textContent=`修复 ${ok}/${state.fixes.length}。请根据提示重试。`;
+    document.getElementById('fixHint').textContent=state.fixes.filter(f=>(f.user||'').trim()!==f.truth).map(f=>f.hint).join('；');
+  }
+  persist();
+}
+
+let humanTimer=null;
+function humanStart(){
+  state.human.start=Date.now();
+  document.getElementById('humanInput').value='';
+  document.getElementById('humanInput').focus();
+  toast('计时开始');
+}
+function humanDone(){
+  if(!state.human.start){toast('请先开始计时');return;}
+  const ms=Date.now()-state.human.start;
+  const src=document.getElementById('humanSrc').textContent.replace(/\s+/g,'');
+  const got=document.getElementById('humanInput').value.replace(/\s+/g,'');
+  let same=0;const n=Math.max(src.length,1);
+  for(let i=0;i<Math.min(src.length,got.length);i++)if(src[i]===got[i])same++;
+  const acc=Math.round(same/Math.max(src.length,got.length)*100);
+  state.human.ms=ms;state.human.acc=acc;
+  document.getElementById('mHuman').textContent=`${(ms/1000).toFixed(1)}s / ${acc}%`;
+  persist();
+}
+function ocrRace(){
+  const t0=performance.now();
+  // simulate quick OCR with possible small error under bad cond
+  let text=document.getElementById('humanSrc').textContent;
+  if(state.cond.glare>70)text=text.replace('D8','DB');
+  const ms=Math.round(40+Math.random()*80+(100-state.cond.clarity));
+  setTimeout(()=>{
+    const src=document.getElementById('humanSrc').textContent.replace(/\s+/g,'');
+    const got=text.replace(/\s+/g,'');
+    let same=0;for(let i=0;i<Math.min(src.length,got.length);i++)if(src[i]===got[i])same++;
+    const acc=Math.round(same/src.length*100);
+    state.ocr.ms=ms;state.ocr.acc=acc;
+    document.getElementById('mOcr').textContent=`${(ms/1000).toFixed(2)}s / ${acc}%`;
+    document.getElementById('humanInput').value=text;
+    persist();toast('OCR 仿真完成');
+  },ms);
+}
+function genLog(){
+  const lines=[
+    '《OCR 识别日志与改进建议》',
+    '教材：山东教育出版社《人工智能通识·第一册》单元2第3节',
+    '',
+    '一、流水线日志（节选）',
+    ...(state.logs.slice(-12).map(x=>'· '+x)),
+    '',
+    '二、人机效率对比',
+    state.human.ms!=null?`· 人工：${(state.human.ms/1000).toFixed(1)}s，正确率 ${state.human.acc}%`:'· 人工：未完成',
+    state.ocr.ms!=null?`· OCR：${(state.ocr.ms/1000).toFixed(2)}s，正确率 ${state.ocr.acc}%`:'· OCR：未完成',
+    '',
+    '三、OCR 优势与局限',
+    '· 优势：批量快、可7×24、格式校验方便。',
+    '· 局限：反光/模糊/手写形变/复杂背景易错；相似字符混淆；需要人工抽检。',
+    '',
+    '四、改进建议',
+    '1. 采集端：控制光线，避免正对强光；保持近似水平。',
+    '2. 预处理：自适应阈值、去反光、倾斜校正。',
+    '3. 业务：车牌等可用格式规则二次校验；关键场景人工复核。',
+    '4. 教学：区分虚构演示数据与真实隐私数据，绝不上传真实车牌/证件。',
+    '',
+    `任务得分：识别任务成功累计 ${state.taskScore}，修复成功累计 ${state.fixScore}`,
+    `生成时间：${new Date().toLocaleString('zh-CN')}`
+  ];
+  state.exportText=lines.join('\n');
+  document.getElementById('finalLog').textContent=state.exportText;
+  persist();toast('日志已生成');
+}
+
+function bind(){
+  document.querySelectorAll('.tab').forEach(tab=>{
+    tab.onclick=()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      tab.classList.add('active');document.getElementById(tab.dataset.tab).classList.add('active');
+    };
+  });
+  document.getElementById('btnSave').onclick=()=>{persist();toast('已保存');};
+  document.getElementById('btnExport').onclick=()=>{
+    const blob=new Blob([JSON.stringify({meta:{lab:KEY},state},null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='单元2_第3节_智能识别文字_进度.json';a.click();URL.revokeObjectURL(a.href);
+  };
+  document.getElementById('btnImport').onclick=()=>document.getElementById('importFile').click();
+  document.getElementById('importFile').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;const r=new FileReader();
+    r.onload=()=>{try{const d=JSON.parse(r.result);Object.assign(state,d.state||d);persist();location.reload();}catch(err){toast('导入失败');}};
+    r.readAsText(f);
+  };
+  document.getElementById('btnFS').onclick=()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>toast('全屏不可用'));else document.exitFullscreen();};
+  document.getElementById('btnReset').onclick=()=>{if(confirm('重置全部进度？')){localStorage.removeItem(KEY);location.reload();}};
+  document.getElementById('btnHelp').onclick=()=>document.getElementById('helpModal').classList.add('show');
+  document.getElementById('helpClose').onclick=()=>document.getElementById('helpModal').classList.remove('show');
+  document.getElementById('btnRun').onclick=runPipe;
+  document.getElementById('btnPause').onclick=pausePipe;
+  document.getElementById('btnStep').onclick=()=>{pausePipe();pipeNext();};
+  document.getElementById('btnPipeReset').onclick=resetPipe;
+  document.getElementById('btnEvalCond').onclick=evalCond;
+  document.getElementById('btnRandCond').onclick=()=>{
+    Object.keys(state.cond).forEach(k=>state.cond[k]=Math.round(Math.random()*100));
+    state.cond.tilt=Math.round(Math.random()*45);
+    renderSliders();updateCondPreview();persist();
+  };
+  document.getElementById('btnOcrSim').onclick=ocrSimTask;
+  document.getElementById('btnReveal').onclick=()=>{
+    const t=TASKS.find(x=>x.id===state.taskId);
+    document.getElementById('taskHint').textContent='标准答案：'+t.truth;
+  };
+  document.getElementById('btnCheckTask').onclick=checkTask;
+  document.getElementById('btnInject').onclick=injectErrors;
+  document.getElementById('btnInjectReset').onclick=()=>{state.fixes=[];renderFixes();document.getElementById('fixFeedback').textContent='已清空。';persist();};
+  document.getElementById('btnFixSubmit').onclick=submitFixes;
+  document.getElementById('btnHumanStart').onclick=humanStart;
+  document.getElementById('btnHumanDone').onclick=humanDone;
+  document.getElementById('btnOcrRace').onclick=ocrRace;
+  document.getElementById('btnGenLog').onclick=genLog;
+  document.getElementById('btnExportLog').onclick=()=>{
+    if(!state.exportText)genLog();
+    const blob=new Blob([state.exportText],{type:'text/plain;charset=utf-8'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='OCR识别日志与改进建议.txt';a.click();URL.revokeObjectURL(a.href);
+  };
+}
+
+load();
+bind();
+renderPipeUI();
+setPipeStep(state.pipeIdx>=0?state.pipeIdx:-1);
+if(state.pipeIdx<0)drawStage('idle');
+renderSliders();updateCondPreview();
+renderTasks();showTask();
+renderFixes();
+if(state.human.ms!=null)document.getElementById('mHuman').textContent=`${(state.human.ms/1000).toFixed(1)}s / ${state.human.acc}%`;
+if(state.ocr.ms!=null)document.getElementById('mOcr').textContent=`${(state.ocr.ms/1000).toFixed(2)}s / ${state.ocr.acc}%`;
+if(state.exportText)document.getElementById('finalLog').textContent=state.exportText;
+})();
+</script>
+</body>
+</html>
