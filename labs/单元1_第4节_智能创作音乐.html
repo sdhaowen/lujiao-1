@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>第4节 · AI音乐风格混合台 | 人工智能创作与机器感知互动实验室</title>
+<style>
+:root{
+  --violet:#5B4BDB;--violet-deep:#3D2FA8;--cyan:#1BB8C9;--cyan-soft:#7EE8F0;
+  --gold:#E8B84A;--gold-soft:#F5D78A;--ink:#1A1F3A;--ink-soft:#3A4266;
+  --bg:#F4F6FF;--panel:#FFFFFF;--line:rgba(91,75,219,.14);
+  --ok:#1F9D6C;--warn:#D97706;--danger:#D14343;--shadow:0 12px 40px rgba(61,47,168,.12);
+  --radius:18px;--font:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:var(--font);color:var(--ink);background:
+  radial-gradient(1200px 600px at 10% -10%,rgba(91,75,219,.18),transparent 55%),
+  radial-gradient(900px 500px at 90% 0%,rgba(27,184,201,.16),transparent 50%),
+  linear-gradient(180deg,#EEF1FF 0%,#F7F8FF 40%,#FFF9EF 100%);
+  min-height:100%}
+body{line-height:1.55}
+button,input,select,textarea{font:inherit}
+a{color:var(--violet)}
+.app-header{
+  position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);
+  background:linear-gradient(90deg,rgba(61,47,168,.92),rgba(27,184,201,.88));
+  color:#fff;border-bottom:1px solid rgba(255,255,255,.18);
+  box-shadow:0 8px 28px rgba(61,47,168,.25);
+}
+.header-inner{max-width:1280px;margin:0 auto;padding:12px 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.brand{display:flex;gap:12px;align-items:center;min-width:260px}
+.brand-mark{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--gold),#fff3c4);display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5)}
+.brand h1{margin:0;font-size:1.05rem;font-weight:700;letter-spacing:.02em}
+.brand p{margin:2px 0 0;font-size:.78rem;opacity:.9}
+.nav-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.nav-actions button,.btn{
+  border:0;border-radius:999px;padding:8px 14px;cursor:pointer;
+  background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.25);
+  transition:transform .15s ease,background .15s ease;
+}
+.nav-actions button:hover,.btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.28)}
+.btn-primary{background:linear-gradient(135deg,var(--violet),var(--cyan));color:#fff;border:none;box-shadow:0 8px 20px rgba(91,75,219,.28)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#f0c96a);color:#3a2a00;border:none;font-weight:700}
+.btn-ghost{background:#fff;color:var(--violet-deep);border:1px solid var(--line)}
+.btn-danger{background:linear-gradient(135deg,#e85d5d,#d14343);color:#fff;border:none}
+.progress-wrap{display:flex;align-items:center;gap:10px;min-width:180px}
+.progress-bar{flex:1;height:8px;background:rgba(255,255,255,.25);border-radius:999px;overflow:hidden}
+.progress-bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),#fff);transition:width .35s ease}
+.progress-wrap span{font-size:.78rem;white-space:nowrap}
+.wrap{max-width:1280px;margin:0 auto;padding:18px}
+.hero{
+  display:grid;grid-template-columns:1.2fr .8fr;gap:18px;margin-bottom:18px;
+  background:linear-gradient(135deg,rgba(255,255,255,.92),rgba(255,249,230,.88));
+  border:1px solid var(--line);border-radius:28px;padding:22px;box-shadow:var(--shadow);
+  overflow:hidden;position:relative;
+}
+.hero::before{
+  content:"";position:absolute;inset:auto -40px -60px auto;width:220px;height:220px;border-radius:50%;
+  background:radial-gradient(circle,rgba(232,184,74,.35),transparent 70%);pointer-events:none;
+}
+.hero h2{margin:0 0 8px;font-size:1.55rem;background:linear-gradient(90deg,var(--violet-deep),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{margin:0;color:var(--ink-soft)}
+.chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{padding:6px 12px;border-radius:999px;background:rgba(91,75,219,.08);color:var(--violet-deep);font-size:.82rem;border:1px solid var(--line)}
+.module-nav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.module-nav button{
+  border:1px solid var(--line);background:#fff;color:var(--ink-soft);padding:10px 14px;border-radius:14px;cursor:pointer;
+}
+.module-nav button.active{
+  background:linear-gradient(135deg,rgba(91,75,219,.12),rgba(27,184,201,.12));
+  color:var(--violet-deep);border-color:rgba(91,75,219,.35);font-weight:700;
+  box-shadow:0 6px 16px rgba(91,75,219,.12);
+}
+.panel{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:18px;margin-bottom:16px;animation:rise .35s ease;
+}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.panel h3{margin:0 0 6px;font-size:1.15rem;display:flex;align-items:center;gap:8px}
+.panel .lead{margin:0 0 14px;color:var(--ink-soft);font-size:.92rem}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+label.field{display:flex;flex-direction:column;gap:6px;font-size:.86rem;color:var(--ink-soft)}
+label.field input,label.field select,label.field textarea,.card-select{
+  border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#FBFBFF;color:var(--ink);
+}
+label.field textarea{min-height:88px;resize:vertical}
+.scene-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.scene-card{
+  border:1px solid var(--line);border-radius:16px;padding:12px;cursor:pointer;background:#fff;
+  transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;min-height:148px;
+}
+.scene-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(91,75,219,.12)}
+.scene-card.active{border-color:var(--violet);box-shadow:0 0 0 3px rgba(91,75,219,.15);background:linear-gradient(180deg,#fff,#F3F0FF)}
+.scene-card svg{width:100%;height:72px;display:block;margin-bottom:8px;border-radius:10px}
+.scene-card strong{display:block;font-size:.95rem}
+.scene-card span{display:block;font-size:.78rem;color:var(--ink-soft);margin-top:4px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.meter{display:flex;align-items:center;gap:10px}
+.meter .bar{flex:1;height:10px;background:#EEF0FA;border-radius:999px;overflow:hidden}
+.meter .bar>i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--violet),var(--gold));width:0;transition:width .4s ease}
+.canvas-box{
+  position:relative;border-radius:16px;overflow:hidden;border:1px solid var(--line);
+  background:linear-gradient(180deg,#14182E,#24305A);min-height:180px;
+}
+canvas{display:block;width:100%;height:180px}
+.beat-row{display:grid;grid-template-columns:repeat(16,1fr);gap:4px;margin-top:10px}
+.beat{height:28px;border-radius:6px;background:#E8EAF8;border:1px solid transparent}
+.beat.on{background:linear-gradient(180deg,var(--cyan-soft),var(--cyan))}
+.beat.accent{background:linear-gradient(180deg,var(--gold-soft),var(--gold))}
+.section-map{display:flex;gap:6px;margin-top:10px}
+.section-map span{flex:1;text-align:center;padding:8px 4px;border-radius:10px;font-size:.78rem;color:#fff}
+.style-compare{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.style-card{
+  border:1px solid var(--line);border-radius:16px;padding:14px;background:linear-gradient(180deg,#fff,#F7F8FF);
+  cursor:pointer;transition:.18s ease;
+}
+.style-card.active{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(27,184,201,.15)}
+.style-card h4{margin:0 0 6px}
+.score-box{
+  display:grid;grid-template-columns:140px 1fr;gap:14px;align-items:center;
+  background:linear-gradient(135deg,rgba(91,75,219,.08),rgba(232,184,74,.1));
+  border-radius:16px;padding:14px;border:1px solid var(--line);
+}
+.score-num{font-size:2.4rem;font-weight:800;color:var(--violet-deep);text-align:center;line-height:1}
+.score-num small{display:block;font-size:.75rem;font-weight:500;color:var(--ink-soft)}
+.check-list{display:grid;gap:8px}
+.check-item{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:12px;background:#F8F9FF;border:1px solid var(--line)}
+.check-item input{margin-top:4px}
+.toast{
+  position:fixed;right:18px;bottom:18px;z-index:80;background:var(--ink);color:#fff;padding:12px 16px;
+  border-radius:12px;box-shadow:var(--shadow);opacity:0;transform:translateY(10px);transition:.25s ease;pointer-events:none;max-width:320px;
+}
+.toast.show{opacity:1;transform:none}
+.modal-mask{
+  position:fixed;inset:0;background:rgba(20,24,46,.55);z-index:90;display:none;align-items:center;justify-content:center;padding:18px;
+}
+.modal-mask.show{display:flex}
+.modal{
+  width:min(640px,100%);background:#fff;border-radius:20px;padding:20px;box-shadow:var(--shadow);max-height:85vh;overflow:auto;
+}
+.modal h3{margin-top:0}
+.footer-note{margin:8px 0 28px;color:var(--ink-soft);font-size:.82rem;text-align:center}
+.warn-banner{
+  margin:10px 0 0;padding:10px 12px;border-radius:12px;background:rgba(217,119,6,.1);
+  border:1px solid rgba(217,119,6,.28);color:#8a4b00;font-size:.86rem;
+}
+.hidden{display:none!important}
+.kv{display:grid;grid-template-columns:90px 1fr;gap:6px 10px;font-size:.88rem}
+.kv b{color:var(--ink-soft);font-weight:600}
+@media (max-width:960px){
+  .hero,.grid-2,.style-compare,.score-box,.scene-cards,.grid-3,.grid-4{grid-template-columns:1fr}
+  .scene-cards{grid-template-columns:1fr 1fr}
+}
+@media (max-width:600px){
+  .scene-cards{grid-template-columns:1fr}
+  .brand h1{font-size:.95rem}
+}
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <path d="M5 18c2-6 4-10 9-10s7 4 9 10" stroke="#3D2FA8" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="8" cy="18" r="2" fill="#3D2FA8"/><circle cx="14" cy="10" r="2" fill="#1BB8C9"/><circle cx="20" cy="18" r="2" fill="#E8B84A"/>
+        </svg>
+      </div>
+      <div>
+        <h1>人工智能创作与机器感知互动实验室</h1>
+        <p>单元1 · 第4节 · 智能创作音乐（P23-28）</p>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <button type="button" id="btnSave" title="保存到本地">保存</button>
+      <button type="button" id="btnExport" title="导出 JSON">导出</button>
+      <button type="button" id="btnImport" title="导入 JSON">导入</button>
+      <button type="button" id="btnFullscreen" title="全屏">全屏</button>
+      <button type="button" id="btnReset" title="重置实验">重置</button>
+      <button type="button" id="btnHelp" title="帮助">帮助</button>
+      <div class="progress-wrap" title="实验完成进度">
+        <div class="progress-bar"><i id="progressFill"></i></div>
+        <span id="progressText">0%</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <h2>AI音乐风格混合台 · 场景配乐实验室</h2>
+      <p>通过离线 Web Audio 振荡器与节拍可视化，体验“场景—风格—关键词—评价—版权”完整智能音乐创作流程。无需联网与外部音源。</p>
+      <div class="chip-row">
+        <span class="chip">场景配乐</span><span class="chip">风格混合</span>
+        <span class="chip">波形比较</span><span class="chip">版权伦理</span>
+      </div>
+      <div class="warn-banner">⚠️ 版权提示：本实验室仅生成教学用模拟音色与节拍，不可直接用于商业发行。引用他人旋律、采样或 AI 生成作品时须遵守著作权与平台协议。</div>
+    </div>
+    <div>
+      <svg viewBox="0 0 360 200" width="100%" height="180" role="img" aria-label="音乐创作工作室插图">
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#5B4BDB"/><stop offset="100%" stop-color="#1BB8C9"/></linearGradient>
+          <linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#E8B84A"/><stop offset="100%" stop-color="#F5D78A"/></linearGradient>
+        </defs>
+        <rect x="0" y="0" width="360" height="200" rx="24" fill="#14182E"/>
+        <path d="M20 140 C60 80,100 160,140 110 S220 60,260 120 320 160,340 100" stroke="url(#g1)" stroke-width="4" fill="none"/>
+        <circle cx="80" cy="120" r="18" fill="url(#g2)" opacity=".9"/>
+        <circle cx="180" cy="90" r="12" fill="#7EE8F0"/>
+        <circle cx="270" cy="130" r="16" fill="#5B4BDB"/>
+        <rect x="40" y="155" width="12" height="25" rx="3" fill="#7EE8F0"/><rect x="60" y="145" width="12" height="35" rx="3" fill="#E8B84A"/>
+        <rect x="80" y="150" width="12" height="30" rx="3" fill="#5B4BDB"/><rect x="100" y="140" width="12" height="40" rx="3" fill="#7EE8F0"/>
+        <text x="28" y="36" fill="#fff" font-size="16" font-family="PingFang SC,Microsoft YaHei,sans-serif">离线合成 · 节拍可视化</text>
+      </svg>
+    </div>
+  </section>
+
+  <nav class="module-nav" id="moduleNav">
+    <button type="button" data-mod="m1" class="active">① 场景与参数</button>
+    <button type="button" data-mod="m2">② 混合合成台</button>
+    <button type="button" data-mod="m3">③ 风格比较</button>
+    <button type="button" data-mod="m4">④ 关键词精炼</button>
+    <button type="button" data-mod="m5">⑤ 作品单与伦理</button>
+  </nav>
+
+  <!-- Module 1 -->
+  <section class="panel" id="m1">
+    <h3>① 场景选择器 · 配乐参数设计</h3>
+    <p class="lead">先选定应用场景，再配置体裁、速度、BPM、乐器、情绪与关键词，为后续合成提供创作意图。</p>
+    <div class="scene-cards" id="sceneCards"></div>
+    <div class="grid-3" style="margin-top:14px">
+      <label class="field">音乐体裁 / 流派
+        <select id="genre"><option>校园民谣</option><option>运动电子</option><option>氛围轻音乐</option><option>国风民乐</option><option>流行抒情</option></select>
+      </label>
+      <label class="field">速度感觉
+        <select id="tempoFeel"><option value="slow">舒缓</option><option value="mid" selected>中速</option><option value="fast">激昂</option></select>
+      </label>
+      <label class="field">BPM（每分钟拍数）
+        <input type="number" id="bpm" min="60" max="180" value="108" />
+      </label>
+      <label class="field">主奏乐器
+        <select id="instrument"><option>钢琴</option><option>古筝</option><option>吉他</option><option>电子合成器</option><option>笛子</option><option>弦乐组</option></select>
+      </label>
+      <label class="field">情绪基调
+        <select id="mood"><option>朝气蓬勃</option><option>温暖治愈</option><option>庄重典雅</option><option>激昂奋进</option><option>宁静致远</option></select>
+      </label>
+      <label class="field">关键词（逗号分隔）
+        <input type="text" id="keywords" value="青春,希望,清晨" placeholder="如：海浪,金色,辽阔" />
+      </label>
+    </div>
+    <div class="toolbar">
+      <button type="button" class="btn btn-primary" id="btnApplyScene">应用场景预设</button>
+      <button type="button" class="btn btn-ghost" id="btnLockParams">锁定参数并进入合成</button>
+      <span id="sceneHint" style="font-size:.86rem;color:var(--ink-soft)"></span>
+    </div>
+  </section>
+
+  <!-- Module 2 -->
+  <section class="panel hidden" id="m2">
+    <h3>② AI音乐风格混合台 · 音频波形与节拍</h3>
+    <p class="lead">使用浏览器 Web Audio API 离线合成简单音色，并在画布上绘制波形、节拍点与曲式段落结构。</p>
+    <div class="grid-2">
+      <div>
+        <div class="kv">
+          <b>当前场景</b><span id="mixScene">—</span>
+          <b>体裁</b><span id="mixGenre">—</span>
+          <b>BPM</b><span id="mixBpm">—</span>
+          <b>乐器</b><span id="mixInst">—</span>
+        </div>
+        <div class="toolbar">
+          <button type="button" class="btn btn-primary" id="btnPlay">▶ 播放</button>
+          <button type="button" class="btn btn-ghost" id="btnPause">⏸ 暂停</button>
+          <button type="button" class="btn btn-ghost" id="btnStop">⏹ 停止</button>
+          <label class="field" style="min-width:140px;margin:0">播放速度
+            <input type="range" id="playSpeed" min="0.5" max="1.5" step="0.1" value="1" />
+          </label>
+          <span id="speedLabel">1.0×</span>
+        </div>
+        <label class="field">段落结构（可编辑）
+          <select id="sectionPreset">
+            <option value="AABA">AABA（流行常见）</option>
+            <option value="ABAB">ABAB（对称）</option>
+            <option value="ABC">ABC（叙事三段）</option>
+          </select>
+        </label>
+        <div class="section-map" id="sectionMap"></div>
+        <p style="font-size:.82rem;color:var(--ink-soft);margin:8px 0 0">节拍网格（深色=强拍，青色=活跃拍）：</p>
+        <div class="beat-row" id="beatRow"></div>
+      </div>
+      <div>
+        <div class="canvas-box"><canvas id="waveCanvas" width="640" height="180"></canvas></div>
+        <div class="meter" style="margin-top:10px"><span style="font-size:.82rem">能量</span><div class="bar"><i id="energyBar"></i></div></div>
+        <div class="warn-banner">教学说明：波形与音色为算法模拟，不等于专业编曲成品。请结合听感评价与版权规范使用。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Module 3 -->
+  <section class="panel hidden" id="m3">
+    <h3>③ 同主题跨风格比较 · 民乐 / 流行 / 轻音乐</h3>
+    <p class="lead">保持同一主题关键词，切换三种风格听感预设，观察波形密度、BPM 倾向与评价维度差异。</p>
+    <div class="style-compare" id="styleCompare"></div>
+    <div class="toolbar">
+      <button type="button" class="btn btn-primary" id="btnComparePlay">播放当前风格片段</button>
+      <button type="button" class="btn btn-ghost" id="btnCompareWave">刷新波形对比</button>
+    </div>
+    <div class="canvas-box"><canvas id="compareCanvas" width="640" height="160"></canvas></div>
+    <div id="compareNote" style="margin-top:10px;font-size:.9rem;color:var(--ink-soft)"></div>
+  </section>
+
+  <!-- Module 4 -->
+  <section class="panel hidden" id="m4">
+    <h3>④ 关键词精炼 · 模拟评分提升</h3>
+    <p class="lead">补充具体、可感知的关键词（场景细节、乐器质感、情绪层次），系统会给出模拟“契合度/创意度/完整度”评分。</p>
+    <div class="grid-2">
+      <div>
+        <label class="field">精炼提示词
+          <textarea id="refineText" placeholder="例如：清晨校园广播站，温暖钢琴与轻打击，渐进高潮，结尾留白"></textarea>
+        </label>
+        <div class="toolbar">
+          <button type="button" class="btn btn-primary" id="btnRefine">分析并评分</button>
+          <button type="button" class="btn btn-ghost" id="btnSuggestKw">智能建议关键词</button>
+        </div>
+        <div id="kwTips" style="font-size:.86rem;color:var(--ink-soft)"></div>
+      </div>
+      <div class="score-box">
+        <div class="score-num" id="totalScore">0<small>综合分</small></div>
+        <div>
+          <div class="meter"><span style="width:64px;font-size:.82rem">契合度</span><div class="bar"><i id="sFit"></i></div><span id="sFitN">0</span></div>
+          <div class="meter" style="margin-top:8px"><span style="width:64px;font-size:.82rem">创意度</span><div class="bar"><i id="sCreate"></i></div><span id="sCreateN">0</span></div>
+          <div class="meter" style="margin-top:8px"><span style="width:64px;font-size:.82rem">完整度</span><div class="bar"><i id="sComplete"></i></div><span id="sCompleteN">0</span></div>
+          <p id="scoreAdvice" style="margin:10px 0 0;font-size:.86rem;color:var(--ink-soft)"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Module 5 -->
+  <section class="panel hidden" id="m5">
+    <h3>⑤ 音乐作品单 · 听感评价 · 版权伦理检查</h3>
+    <p class="lead">整理创作档案，完成听感评价与版权伦理自查，导出课堂作品包。</p>
+    <div class="grid-2">
+      <div>
+        <label class="field">作品标题<input id="workTitle" type="text" placeholder="如：晨光里的操场" /></label>
+        <label class="field">创作者 / 小组<input id="workAuthor" type="text" placeholder="姓名或小组名" /></label>
+        <label class="field">听感评价（至少 40 字）
+          <textarea id="listenEval" placeholder="从旋律、节奏、情绪匹配、场景适合度等方面评价……"></textarea>
+        </label>
+      </div>
+      <div>
+        <p style="margin:0 0 8px;font-weight:700">版权与伦理检查清单</p>
+        <div class="check-list" id="ethicsList"></div>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button type="button" class="btn btn-gold" id="btnExportWork">导出作品单 JSON</button>
+      <button type="button" class="btn btn-primary" id="btnComplete">标记本节完成</button>
+    </div>
+    <pre id="exportPreview" style="background:#14182E;color:#D7E0FF;padding:12px;border-radius:12px;overflow:auto;max-height:220px;font-size:.78rem;display:none"></pre>
+  </section>
+
+  <p class="footer-note">山东教育出版社《人工智能通识·第一册》单元1第4节配套离线互动实验 · 本地存储键：sdep_ai_u1_s4_music_lab</p>
+</main>
+
+<div class="toast" id="toast"></div>
+<div class="modal-mask" id="helpModal">
+  <div class="modal">
+    <h3>使用帮助 · 第4节智能创作音乐</h3>
+    <ol>
+      <li>选择场景并设定 BPM、乐器、情绪与关键词。</li>
+      <li>在混合合成台播放离线音色，观察波形与节拍段落。</li>
+      <li>比较民乐 / 流行 / 轻音乐三种风格差异。</li>
+      <li>精炼关键词以提升模拟评分。</li>
+      <li>填写作品单、完成版权伦理检查并导出。</li>
+    </ol>
+    <p>顶部「保存」写入 localStorage；「导出/导入」用于课堂间迁移；「重置」清空全部进度。</p>
+    <div class="toolbar"><button type="button" class="btn btn-primary" id="closeHelp">知道了</button></div>
+  </div>
+</div>
+<input type="file" id="importFile" accept="application/json,.json" class="hidden" />
+
+<script>
+(function(){
+"use strict";
+const STORAGE_KEY = "sdep_ai_u1_s4_music_lab";
+const SCENES = [
+  {id:"campus", name:"校园", desc:"清晨校园、广播操与青春叙事", bpm:100, genre:"校园民谣", inst:"吉他", mood:"朝气蓬勃", kw:"青春,希望,清晨",
+   svg:'<svg viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="80" fill="#E8ECFF"/><rect x="30" y="28" width="50" height="40" fill="#5B4BDB"/><polygon points="30,28 55,10 80,28" fill="#E8B84A"/><circle cx="160" cy="22" r="12" fill="#F5D78A"/><rect x="100" y="45" width="70" height="8" fill="#1BB8C9"/></svg>'},
+  {id:"sports", name:"运动会", desc:"冲刺、鼓点与集体荣誉感", bpm:132, genre:"运动电子", inst:"电子合成器", mood:"激昂奋进", kw:"冲刺,鼓点,荣誉",
+   svg:'<svg viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="80" fill="#DFF7FA"/><path d="M20 55 L60 30 L100 50 L140 25 L180 48" stroke="#1BB8C9" stroke-width="4" fill="none"/><circle cx="60" cy="30" r="6" fill="#E8B84A"/><circle cx="140" cy="25" r="6" fill="#5B4BDB"/></svg>'},
+  {id:"sunrise", name:"海边日出", desc:"潮汐律动与金色晨光", bpm:84, genre:"氛围轻音乐", inst:"钢琴", mood:"宁静致远", kw:"海浪,金色,辽阔",
+   svg:'<svg viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="80" fill="#FFF4D8"/><circle cx="150" cy="28" r="16" fill="#E8B84A"/><path d="M0 50 Q50 35 100 50 T200 50 V80 H0Z" fill="#1BB8C9" opacity=".55"/></svg>'},
+  {id:"tradition", name:"传统文化", desc:"仪式感、丝竹与东方意境", bpm:72, genre:"国风民乐", inst:"古筝", mood:"庄重典雅", kw:"山水,丝竹,礼乐",
+   svg:'<svg viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="80" fill="#F3EEFF"/><path d="M20 60 Q60 20 100 55 T180 40" stroke="#5B4BDB" stroke-width="3" fill="none"/><rect x="40" y="20" width="8" height="45" fill="#E8B84A"/><rect x="70" y="28" width="8" height="37" fill="#1BB8C9"/></svg>'}
+];
+const STYLES = [
+  {id:"minyue", name:"民乐", tip:"五声倾向、弹拨质感、留白呼吸", bpmBias:-12, wave:"sparse", color:"#5B4BDB"},
+  {id:"pop", name:"流行", tip:"清晰副歌钩子、稳定鼓点", bpmBias:8, wave:"dense", color:"#1BB8C9"},
+  {id:"light", name:"轻音乐", tip:"柔和铺底、低冲击力、治愈氛围", bpmBias:-6, wave:"soft", color:"#E8B84A"}
+];
+const ETHICS = [
+  {id:"e1", text:"未直接复制受版权保护的完整旋律或歌词"},
+  {id:"e2", text:"若使用公开素材/采样，已注明来源与授权范围"},
+  {id:"e3", text:"AI 生成内容仅作学习演示，不宣称原创误导他人"},
+  {id:"e4", text:"不将他人肖像/校歌等未经授权元素用于对外传播"},
+  {id:"e5", text:"了解平台用户协议中关于 AI 音乐商用的限制"}
+];
+
+const state = {
+  sceneId:"campus", genre:"校园民谣", tempoFeel:"mid", bpm:108, instrument:"吉他", mood:"朝气蓬勃",
+  keywords:"青春,希望,清晨", section:"AABA", styleId:"minyue",
+  refineText:"", scores:{fit:0,create:0,complete:0,total:0},
+  workTitle:"", workAuthor:"", listenEval:"", ethics:{},
+  modulesDone:{m1:false,m2:false,m3:false,m4:false,m5:false}, activeMod:"m1"
+};
+
+let audioCtx=null, masterGain=null, playing=false, nodes=[], animId=0, phase=0, speed=1;
+
+function $(id){return document.getElementById(id)}
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),2200)}
+function ensureAudio(){
+  if(!audioCtx){audioCtx=new (window.AudioContext||window.webkitAudioContext)();masterGain=audioCtx.createGain();masterGain.gain.value=0.18;masterGain.connect(audioCtx.destination)}
+  if(audioCtx.state==="suspended") audioCtx.resume();
+}
+function stopNodes(){nodes.forEach(n=>{try{n.stop()}catch(e){} try{n.disconnect()}catch(e){}});nodes=[];playing=false}
+function freqForInstrument(inst, step){
+  const base = inst.includes("筝")||inst.includes("笛") ? 294 : inst.includes("吉他") ? 196 : inst.includes("电子") ? 220 : 261.63;
+  const scale = [0,2,4,7,9,12,14,16];
+  return base * Math.pow(2, scale[step%scale.length]/12);
+}
+function schedulePattern(styleBias){
+  ensureAudio(); stopNodes();
+  const bpm = Math.max(60, Math.min(180, (state.bpm + (styleBias||0)) * speed));
+  const beatDur = 60/bpm;
+  const now = audioCtx.currentTime + 0.05;
+  const steps = 16;
+  const inst = state.instrument;
+  for(let i=0;i<steps;i++){
+    const t = now + i*beatDur*0.5;
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    const isAccent = i%4===0;
+    osc.type = inst.includes("电子") ? "sawtooth" : inst.includes("吉他")||inst.includes("筝") ? "triangle" : "sine";
+    osc.frequency.value = freqForInstrument(inst, isAccent?0:(i%8));
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(isAccent?0.35:0.18, t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.001, t+beatDur*0.45);
+    osc.connect(g); g.connect(masterGain);
+    osc.start(t); osc.stop(t+beatDur*0.5);
+    nodes.push(osc);
+    if(isAccent){
+      const noiseBuf = audioCtx.createBuffer(1, audioCtx.sampleRate*0.05, audioCtx.sampleRate);
+      const data = noiseBuf.getChannelData(0);
+      for(let k=0;k<data.length;k++) data[k]=(Math.random()*2-1)*0.4;
+      const src = audioCtx.createBufferSource(); src.buffer=noiseBuf;
+      const ng = audioCtx.createGain(); ng.gain.value=0.08;
+      src.connect(ng); ng.connect(masterGain); src.start(t); nodes.push(src);
+    }
+  }
+  playing=true;
+  setTimeout(()=>{if(playing) schedulePattern(styleBias)}, steps*beatDur*500);
+}
+function drawWave(canvas, mode){
+  const ctx=canvas.getContext("2d");
+  const w=canvas.width, h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const grd=ctx.createLinearGradient(0,0,w,0);
+  grd.addColorStop(0,"#5B4BDB"); grd.addColorStop(.5,"#1BB8C9"); grd.addColorStop(1,"#E8B84A");
+  ctx.strokeStyle=grd; ctx.lineWidth=2; ctx.beginPath();
+  const dens = mode==="dense"?1.8: mode==="soft"?0.7: mode==="sparse"?1.1:1.2;
+  for(let x=0;x<w;x++){
+    const t = x/w*Math.PI*8 + phase;
+    const env = playing ? (0.55+0.45*Math.sin(phase*2+x*0.02)) : 0.25;
+    const y = h/2 + Math.sin(t*dens)*h*0.28*env + Math.sin(t*2.7)*h*0.08*env;
+    if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  ctx.fillStyle="rgba(255,255,255,.08)";
+  for(let i=0;i<16;i++){ if(i%4===0) ctx.fillRect(i*(w/16),0,2,h) }
+  $("energyBar").style.width = (playing? (55+40*Math.abs(Math.sin(phase))):8) + "%";
+}
+function animate(){
+  phase += 0.08*speed;
+  drawWave($("waveCanvas"), STYLES.find(s=>s.id===state.styleId)?.wave || "soft");
+  animId = requestAnimationFrame(animate);
+}
+function renderScenes(){
+  const box=$("sceneCards"); box.innerHTML="";
+  SCENES.forEach(sc=>{
+    const el=document.createElement("div");
+    el.className="scene-card"+(state.sceneId===sc.id?" active":"");
+    el.innerHTML=sc.svg+"<strong>"+sc.name+"</strong><span>"+sc.desc+"</span>";
+    el.onclick=()=>{state.sceneId=sc.id; applyScenePreset(false); renderScenes(); markDone("m1"); updateProgress(); toast("已选择场景："+sc.name)};
+    box.appendChild(el);
+  });
+}
+function applyScenePreset(toastOn){
+  const sc=SCENES.find(s=>s.id===state.sceneId)||SCENES[0];
+  state.bpm=sc.bpm; state.genre=sc.genre; state.instrument=sc.inst; state.mood=sc.mood; state.keywords=sc.kw;
+  $("bpm").value=state.bpm; $("genre").value=state.genre; $("instrument").value=state.instrument;
+  $("mood").value=state.mood; $("keywords").value=state.keywords;
+  $("sceneHint").textContent="预设已载入："+sc.name+" · 建议 BPM "+sc.bpm;
+  if(toastOn!==false) toast("已应用「"+sc.name+"」场景预设");
+  syncMixLabels();
+}
+function syncFromForm(){
+  state.genre=$("genre").value; state.tempoFeel=$("tempoFeel").value; state.bpm=+$("bpm").value||108;
+  state.instrument=$("instrument").value; state.mood=$("mood").value; state.keywords=$("keywords").value.trim();
+  state.section=$("sectionPreset")?$("sectionPreset").value:state.section;
+  syncMixLabels();
+}
+function syncMixLabels(){
+  const sc=SCENES.find(s=>s.id===state.sceneId);
+  if($("mixScene")) $("mixScene").textContent=sc?sc.name:"—";
+  if($("mixGenre")) $("mixGenre").textContent=state.genre;
+  if($("mixBpm")) $("mixBpm").textContent=state.bpm+" · "+({slow:"舒缓",mid:"中速",fast:"激昂"}[state.tempoFeel]||"");
+  if($("mixInst")) $("mixInst").textContent=state.instrument+" / "+state.mood;
+}
+function renderBeats(){
+  const row=$("beatRow"); row.innerHTML="";
+  for(let i=0;i<16;i++){
+    const d=document.createElement("div");
+    d.className="beat"+(i%4===0?" accent": (i%2===0?" on":""));
+    row.appendChild(d);
+  }
+}
+function renderSections(){
+  const map={AABA:[["A","#5B4BDB"],["A","#6E60E8"],["B","#1BB8C9"],["A","#E8B84A"]],
+    ABAB:[["A","#5B4BDB"],["B","#1BB8C9"],["A","#5B4BDB"],["B","#E8B84A"]],
+    ABC:[["A 起","#5B4BDB"],["B 承","#1BB8C9"],["C 合","#E8B84A"]]};
+  const arr=map[state.section]||map.AABA;
+  $("sectionMap").innerHTML=arr.map(([n,c])=>`<span style="background:${c}">${n}</span>`).join("");
+}
+function renderStyles(){
+  const box=$("styleCompare"); box.innerHTML="";
+  STYLES.forEach(st=>{
+    const el=document.createElement("div");
+    el.className="style-card"+(state.styleId===st.id?" active":"");
+    el.innerHTML=`<h4 style="color:${st.color}">${st.name}</h4><p style="margin:0;font-size:.86rem;color:var(--ink-soft)">${st.tip}</p><p style="margin:8px 0 0;font-size:.82rem">BPM 倾向：${state.bpm+st.bpmBias}</p>`;
+    el.onclick=()=>{state.styleId=st.id; renderStyles(); drawCompare(); markDone("m3"); updateProgress(); toast("当前比较风格："+st.name)};
+    box.appendChild(el);
+  });
+  drawCompare();
+}
+function drawCompare(){
+  const canvas=$("compareCanvas"); const ctx=canvas.getContext("2d");
+  const w=canvas.width,h=canvas.height; ctx.clearRect(0,0,w,h);
+  STYLES.forEach((st,idx)=>{
+    const y0 = 20+idx*45; ctx.strokeStyle=st.color; ctx.lineWidth=2; ctx.beginPath();
+    for(let x=0;x<w;x++){
+      const dens=st.wave==="dense"?2.2:st.wave==="sparse"?1:0.8;
+      const y=y0+Math.sin(x/w*Math.PI*10*dens + idx)*(st.wave==="soft"?8:14);
+      if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    ctx.fillStyle=st.color; ctx.font="12px PingFang SC,Microsoft YaHei,sans-serif"; ctx.fillText(st.name,8,y0-6);
+  });
+  const cur=STYLES.find(s=>s.id===state.styleId);
+  $("compareNote").textContent=cur?`「${cur.name}」：${cur.tip}。同主题下，民乐更重留白与音色，流行强调节奏钩子，轻音乐侧重氛围铺陈。`:"请选择风格";
+}
+function scoreRefine(){
+  const text=($("refineText").value||"").trim();
+  state.refineText=text;
+  const baseKw=(state.keywords||"").split(/[,，、\s]+/).filter(Boolean);
+  const extra=text.split(/[,，、\s]+/).filter(w=>w.length>=2);
+  const sensory=["光","风","海","鼓","弦","留白","渐进","高潮","清晨","金色","礼乐","冲刺","广播"];
+  const hit=sensory.filter(k=>text.includes(k)||baseKw.some(b=>b.includes(k))).length;
+  const lenScore=Math.min(40, text.length);
+  const kwScore=Math.min(30, (baseKw.length+extra.length)*4);
+  const sceneBonus = state.sceneId?10:0;
+  const fit=Math.min(100, 35+hit*8+sceneBonus);
+  const create=Math.min(100, 25+kwScore+hit*3);
+  const complete=Math.min(100, 20+lenScore+ (state.section?10:0) + (state.instrument?8:0));
+  const total=Math.round((fit+create+complete)/3);
+  state.scores={fit,create,complete,total};
+  $("sFit").style.width=fit+"%"; $("sCreate").style.width=create+"%"; $("sComplete").style.width=complete+"%";
+  $("sFitN").textContent=fit; $("sCreateN").textContent=create; $("sCompleteN").textContent=complete;
+  $("totalScore").innerHTML=total+"<small>综合分</small>";
+  $("scoreAdvice").textContent = total>=80 ? "提示词具体且富有层次，适合进入作品单整理。" :
+    total>=60 ? "已有较好基础，可补充乐器质感、段落变化与结束方式。" :
+    "请增加可感知细节：时间、地点、乐器、情绪曲线与禁忌（如勿抄袭）。";
+  $("kwTips").textContent="识别到关键词："+[...new Set([...baseKw,...extra])].slice(0,12).join("、") || "（暂无）";
+  markDone("m4"); updateProgress(); saveSilent();
+}
+function renderEthics(){
+  const box=$("ethicsList"); box.innerHTML="";
+  ETHICS.forEach(e=>{
+    const row=document.createElement("label"); row.className="check-item";
+    row.innerHTML=`<input type="checkbox" data-eid="${e.id}" ${state.ethics[e.id]?"checked":""}/><span>${e.text}</span>`;
+    row.querySelector("input").onchange=(ev)=>{state.ethics[e.id]=ev.target.checked; updateProgress(); saveSilent()};
+    box.appendChild(row);
+  });
+}
+function markDone(m){state.modulesDone[m]=true}
+function updateProgress(){
+  let score=0;
+  if(state.sceneId && state.keywords) score+=15;
+  if(state.modulesDone.m1) score+=10;
+  if(state.modulesDone.m2) score+=20;
+  if(state.modulesDone.m3) score+=15;
+  if(state.scores.total>=60) score+=15;
+  if(($("listenEval")?.value||state.listenEval||"").length>=40) score+=10;
+  const ethicsOk=ETHICS.filter(e=>state.ethics[e.id]).length;
+  score += Math.round(ethicsOk/ETHICS.length*15);
+  score=Math.min(100,score);
+  $("progressFill").style.width=score+"%";
+  $("progressText").textContent=score+"%";
+}
+function switchMod(id){
+  state.activeMod=id;
+  ["m1","m2","m3","m4","m5"].forEach(m=>{
+    $(m).classList.toggle("hidden", m!==id);
+  });
+  document.querySelectorAll("#moduleNav button").forEach(b=>b.classList.toggle("active", b.dataset.mod===id));
+  if(id==="m2"){syncFromForm(); renderBeats(); renderSections(); if(!animId) animate()}
+  if(id==="m3") renderStyles();
+  if(id==="m4"){ $("refineText").value=state.refineText||state.keywords; if(state.scores.total) scoreRefine()}
+  if(id==="m5") renderEthics();
+}
+function gather(){
+  syncFromForm();
+  state.workTitle=$("workTitle").value; state.workAuthor=$("workAuthor").value; state.listenEval=$("listenEval").value;
+  state.refineText=$("refineText").value; state.section=$("sectionPreset").value;
+  return JSON.parse(JSON.stringify(state));
+}
+function applyState(data){
+  Object.assign(state, data);
+  $("genre").value=state.genre; $("tempoFeel").value=state.tempoFeel; $("bpm").value=state.bpm;
+  $("instrument").value=state.instrument; $("mood").value=state.mood; $("keywords").value=state.keywords;
+  $("sectionPreset").value=state.section; $("refineText").value=state.refineText||"";
+  $("workTitle").value=state.workTitle||""; $("workAuthor").value=state.workAuthor||""; $("listenEval").value=state.listenEval||"";
+  renderScenes(); syncMixLabels(); renderEthics(); updateProgress(); switchMod(state.activeMod||"m1");
+}
+function saveSilent(){try{localStorage.setItem(STORAGE_KEY, JSON.stringify(gather()))}catch(e){}}
+function save(){saveSilent(); toast("已保存到本地浏览器")}
+function exportJSON(payload, filename){
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); URL.revokeObjectURL(a.href);
+}
+function load(){
+  try{const raw=localStorage.getItem(STORAGE_KEY); if(raw) applyState(JSON.parse(raw))}catch(e){}
+}
+function resetAll(){
+  if(!confirm("确定重置本节全部进度？")) return;
+  stopNodes(); localStorage.removeItem(STORAGE_KEY); location.reload();
+}
+
+// events
+document.querySelectorAll("#moduleNav button").forEach(b=>b.onclick=()=>switchMod(b.dataset.mod));
+$("btnApplyScene").onclick=()=>{applyScenePreset(true); markDone("m1"); updateProgress(); saveSilent()};
+$("btnLockParams").onclick=()=>{syncFromForm(); markDone("m1"); markDone("m2"); updateProgress(); switchMod("m2"); toast("参数已锁定，进入合成台"); saveSilent()};
+["genre","tempoFeel","bpm","instrument","mood","keywords"].forEach(id=>$(id).addEventListener("change",()=>{syncFromForm(); saveSilent()}));
+$("sectionPreset").onchange=()=>{state.section=$("sectionPreset").value; renderSections(); saveSilent()};
+$("btnPlay").onclick=()=>{syncFromForm(); const bias=STYLES.find(s=>s.id===state.styleId)?.bpmBias||0; schedulePattern(bias); markDone("m2"); updateProgress(); toast("正在播放离线合成片段")};
+$("btnPause").onclick=()=>{if(audioCtx) audioCtx.suspend(); playing=false; toast("已暂停")};
+$("btnStop").onclick=()=>{stopNodes(); if(audioCtx) audioCtx.resume(); toast("已停止")};
+$("playSpeed").oninput=()=>{speed=+$("playSpeed").value; $("speedLabel").textContent=speed.toFixed(1)+"×"};
+$("btnComparePlay").onclick=()=>{const st=STYLES.find(s=>s.id===state.styleId); schedulePattern(st?st.bpmBias:0); markDone("m3"); updateProgress()};
+$("btnCompareWave").onclick=()=>{drawCompare(); toast("波形对比已刷新")};
+$("btnRefine").onclick=scoreRefine;
+$("btnSuggestKw").onclick=()=>{
+  const sc=SCENES.find(s=>s.id===state.sceneId);
+  const tips={campus:"课间铃声,阳光操场,少年合唱尾音",sports:"起跑哨声,层层鼓点,冲线欢呼",sunrise:"潮汐呼吸,金色铺底,远处海鸥点缀",tradition:"琵琶扫弦,殿宇回声,礼序渐进"};
+  $("refineText").value=(state.keywords?state.keywords+"，":"")+(tips[sc?.id]||"层次递进,收束留白");
+  scoreRefine(); toast("已填入建议关键词");
+};
+$("btnExportWork").onclick=()=>{
+  const data=gather();
+  if((data.listenEval||"").length<40){toast("请先完成至少40字听感评价"); return}
+  const pack={meta:{lab:"单元1第4节智能创作音乐",exportedAt:new Date().toISOString(),copyrightNotice:"仅供教学，注意著作权"}, data};
+  $("exportPreview").style.display="block"; $("exportPreview").textContent=JSON.stringify(pack,null,2);
+  exportJSON(pack, "音乐作品单_"+ (data.workTitle||"未命名") +".json");
+  markDone("m5"); updateProgress(); toast("作品单已导出");
+};
+$("btnComplete").onclick=()=>{
+  const ok=ETHICS.every(e=>state.ethics[e.id]);
+  if(!ok){toast("请完成全部版权伦理检查"); return}
+  markDone("m5"); updateProgress(); save(); toast("本节实验已标记完成");
+};
+$("btnSave").onclick=save;
+$("btnExport").onclick=()=>exportJSON({type:STORAGE_KEY, savedAt:new Date().toISOString(), state:gather()}, "lab_u1_s4_music.json");
+$("btnImport").onclick=()=>$("importFile").click();
+$("importFile").onchange=(ev)=>{
+  const f=ev.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=()=>{try{const obj=JSON.parse(reader.result); applyState(obj.state||obj); saveSilent(); toast("导入成功")}catch(e){toast("导入失败：JSON 无效")}};
+  reader.readAsText(f);
+};
+$("btnFullscreen").onclick=()=>{ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.()};
+$("btnReset").onclick=resetAll;
+$("btnHelp").onclick=()=>$("helpModal").classList.add("show");
+$("closeHelp").onclick=()=>$("helpModal").classList.remove("show");
+$("listenEval").addEventListener("input",()=>{state.listenEval=$("listenEval").value; updateProgress()});
+
+renderScenes(); applyScenePreset(false); renderBeats(); renderSections(); renderStyles(); renderEthics();
+load(); updateProgress(); animate();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>第5节 · 文生视频流程模拟器 | 人工智能创作与机器感知互动实验室</title>
+<style>
+:root{
+  --violet:#5B4BDB;--violet-deep:#3D2FA8;--cyan:#1BB8C9;--cyan-soft:#7EE8F0;
+  --gold:#E8B84A;--gold-soft:#F5D78A;--ink:#1A1F3A;--ink-soft:#3A4266;
+  --bg:#F4F6FF;--panel:#FFFFFF;--line:rgba(91,75,219,.14);
+  --ok:#1F9D6C;--warn:#D97706;--danger:#D14343;--shadow:0 12px 40px rgba(61,47,168,.12);
+  --radius:18px;--font:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:var(--font);color:var(--ink);background:
+  radial-gradient(1100px 520px at 0% 0%,rgba(91,75,219,.18),transparent 55%),
+  radial-gradient(900px 480px at 100% 10%,rgba(27,184,201,.15),transparent 50%),
+  linear-gradient(180deg,#EEF1FF 0%,#F8FAFF 45%,#FFF8EB 100%);
+  min-height:100%;line-height:1.55}
+button,input,select,textarea{font:inherit}
+.app-header{
+  position:sticky;top:0;z-index:40;backdrop-filter:blur(14px);
+  background:linear-gradient(90deg,rgba(61,47,168,.93),rgba(27,184,201,.88));
+  color:#fff;border-bottom:1px solid rgba(255,255,255,.18);
+  box-shadow:0 8px 28px rgba(61,47,168,.25);
+}
+.header-inner{max-width:1280px;margin:0 auto;padding:12px 18px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.brand{display:flex;gap:12px;align-items:center;min-width:260px}
+.brand-mark{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--gold),#fff3c4);display:grid;place-items:center}
+.brand h1{margin:0;font-size:1.05rem;font-weight:700}
+.brand p{margin:2px 0 0;font-size:.78rem;opacity:.9}
+.nav-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.nav-actions button,.btn{
+  border:0;border-radius:999px;padding:8px 14px;cursor:pointer;
+  background:rgba(255,255,255,.16);color:#fff;border:1px solid rgba(255,255,255,.25);
+  transition:transform .15s ease,background .15s ease;
+}
+.nav-actions button:hover,.btn:hover{transform:translateY(-1px);background:rgba(255,255,255,.28)}
+.btn-primary{background:linear-gradient(135deg,var(--violet),var(--cyan));color:#fff;border:none;box-shadow:0 8px 20px rgba(91,75,219,.28)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),#f0c96a);color:#3a2a00;border:none;font-weight:700}
+.btn-ghost{background:#fff;color:var(--violet-deep);border:1px solid var(--line)}
+.btn-danger{background:linear-gradient(135deg,#e85d5d,#d14343);color:#fff;border:none}
+.progress-wrap{display:flex;align-items:center;gap:10px;min-width:180px}
+.progress-bar{flex:1;height:8px;background:rgba(255,255,255,.25);border-radius:999px;overflow:hidden}
+.progress-bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),#fff);transition:width .35s ease}
+.progress-wrap span{font-size:.78rem;white-space:nowrap}
+.wrap{max-width:1280px;margin:0 auto;padding:18px}
+.hero{
+  display:grid;grid-template-columns:1.15fr .85fr;gap:18px;margin-bottom:18px;
+  background:linear-gradient(135deg,rgba(255,255,255,.94),rgba(255,248,230,.9));
+  border:1px solid var(--line);border-radius:28px;padding:22px;box-shadow:var(--shadow);position:relative;overflow:hidden;
+}
+.hero::after{
+  content:"";position:absolute;right:-30px;bottom:-40px;width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,rgba(27,184,201,.25),transparent 70%);pointer-events:none;
+}
+.hero h2{margin:0 0 8px;font-size:1.55rem;background:linear-gradient(90deg,var(--violet-deep),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{margin:0;color:var(--ink-soft)}
+.chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.chip{padding:6px 12px;border-radius:999px;background:rgba(91,75,219,.08);color:var(--violet-deep);font-size:.82rem;border:1px solid var(--line)}
+.module-nav{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 16px}
+.module-nav button{
+  border:1px solid var(--line);background:#fff;color:var(--ink-soft);padding:10px 14px;border-radius:14px;cursor:pointer;
+}
+.module-nav button.active{
+  background:linear-gradient(135deg,rgba(91,75,219,.12),rgba(27,184,201,.12));
+  color:var(--violet-deep);border-color:rgba(91,75,219,.35);font-weight:700;
+  box-shadow:0 6px 16px rgba(91,75,219,.12);
+}
+.panel{
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:18px;margin-bottom:16px;animation:rise .35s ease;
+}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.panel h3{margin:0 0 6px;font-size:1.15rem}
+.panel .lead{margin:0 0 14px;color:var(--ink-soft);font-size:.92rem}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+label.field{display:flex;flex-direction:column;gap:6px;font-size:.86rem;color:var(--ink-soft)}
+label.field input,label.field select,label.field textarea{
+  border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#FBFBFF;color:var(--ink);
+}
+label.field textarea{min-height:90px;resize:vertical}
+.prompt-parts{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.part-card{
+  border:1px solid var(--line);border-radius:14px;padding:12px;background:linear-gradient(180deg,#fff,#F6F7FF);
+}
+.part-card h4{margin:0 0 6px;font-size:.92rem;color:var(--violet-deep)}
+.part-card.ok{border-color:rgba(31,157,108,.45);box-shadow:0 0 0 2px rgba(31,157,108,.12)}
+.timeline{
+  display:flex;gap:10px;overflow-x:auto;padding:8px 2px 14px;scroll-snap-type:x mandatory;
+}
+.shot{
+  min-width:200px;max-width:220px;border:1px solid var(--line);border-radius:16px;background:#fff;
+  padding:10px;scroll-snap-align:start;cursor:grab;transition:box-shadow .18s,border-color .18s;
+}
+.shot.active{border-color:var(--violet);box-shadow:0 0 0 3px rgba(91,75,219,.16)}
+.shot .thumb{
+  height:100px;border-radius:12px;overflow:hidden;margin-bottom:8px;
+  background:linear-gradient(135deg,#24305A,#5B4BDB);
+  position:relative;
+}
+.shot .thumb canvas,.shot .thumb svg{width:100%;height:100%;display:block}
+.shot .meta{font-size:.78rem;color:var(--ink-soft)}
+.shot-actions{display:flex;gap:6px;margin-top:8px}
+.shot-actions button{flex:1;padding:6px 8px;border-radius:10px;border:1px solid var(--line);background:#F7F8FF;cursor:pointer;font-size:.78rem}
+.preview-stage{
+  position:relative;border-radius:18px;overflow:hidden;border:1px solid var(--line);
+  background:#14182E;aspect-ratio:16/9;min-height:260px;
+}
+.preview-stage canvas{width:100%;height:100%;display:block}
+.preview-overlay{
+  position:absolute;left:12px;right:12px;bottom:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+  background:rgba(20,24,46,.55);backdrop-filter:blur(8px);border-radius:12px;padding:8px 10px;color:#fff;font-size:.82rem;
+}
+.preview-overlay input[type=range]{flex:1;min-width:120px}
+.mode-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.mode-tabs button{
+  border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;cursor:pointer;color:var(--ink-soft);
+}
+.mode-tabs button.active{background:linear-gradient(135deg,var(--violet),var(--cyan));color:#fff;border:none}
+.theme-pills{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+.theme-pills button{
+  border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 12px;cursor:pointer;
+}
+.theme-pills button.active{border-color:var(--gold);background:linear-gradient(180deg,#FFF8E6,#fff);font-weight:700}
+.risk-grid{display:grid;gap:8px}
+.risk-item{
+  display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:start;
+  padding:12px;border-radius:14px;border:1px solid var(--line);background:#F8F9FF;
+}
+.risk-item .tag{font-size:.72rem;padding:3px 8px;border-radius:999px;background:rgba(217,119,6,.12);color:#8a4b00;white-space:nowrap}
+.risk-item.pass .tag{background:rgba(31,157,108,.12);color:#0f6b47}
+.risk-item.fail .tag{background:rgba(209,67,67,.12);color:#9a2222}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0}
+.toast{
+  position:fixed;right:18px;bottom:18px;z-index:80;background:var(--ink);color:#fff;padding:12px 16px;
+  border-radius:12px;box-shadow:var(--shadow);opacity:0;transform:translateY(10px);transition:.25s ease;pointer-events:none;max-width:320px;
+}
+.toast.show{opacity:1;transform:none}
+.modal-mask{
+  position:fixed;inset:0;background:rgba(20,24,46,.55);z-index:90;display:none;align-items:center;justify-content:center;padding:18px;
+}
+.modal-mask.show{display:flex}
+.modal{width:min(660px,100%);background:#fff;border-radius:20px;padding:20px;box-shadow:var(--shadow);max-height:85vh;overflow:auto}
+.modal h3{margin-top:0}
+.footer-note{margin:8px 0 28px;color:var(--ink-soft);font-size:.82rem;text-align:center}
+.warn-banner{
+  margin:10px 0 0;padding:10px 12px;border-radius:12px;background:rgba(217,119,6,.1);
+  border:1px solid rgba(217,119,6,.28);color:#8a4b00;font-size:.86rem;
+}
+.script-box{
+  background:#14182E;color:#D7E0FF;border-radius:14px;padding:12px;font-size:.82rem;white-space:pre-wrap;
+  max-height:260px;overflow:auto;min-height:120px;
+}
+.hidden{display:none!important}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+.stat{background:linear-gradient(180deg,#fff,#F4F6FF);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.stat b{display:block;font-size:1.2rem;color:var(--violet-deep)}
+.stat span{font-size:.75rem;color:var(--ink-soft)}
+@media (max-width:960px){
+  .hero,.grid-2,.prompt-parts,.stat-row{grid-template-columns:1fr 1fr}
+  .prompt-parts{grid-template-columns:1fr 1fr}
+}
+@media (max-width:600px){
+  .hero,.grid-2,.prompt-parts,.stat-row,.grid-3{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header class="app-header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <rect x="4" y="7" width="20" height="14" rx="3" stroke="#3D2FA8" stroke-width="2"/>
+          <path d="M11 11l7 3.5-7 3.5V11z" fill="#1BB8C9"/>
+          <circle cx="22" cy="8" r="3" fill="#E8B84A"/>
+        </svg>
+      </div>
+      <div>
+        <h1>人工智能创作与机器感知互动实验室</h1>
+        <p>单元1 · 第5节 · 智能创作视频（P29-35）</p>
+      </div>
+    </div>
+    <div class="nav-actions">
+      <button type="button" id="btnSave">保存</button>
+      <button type="button" id="btnExport">导出</button>
+      <button type="button" id="btnImport">导入</button>
+      <button type="button" id="btnFullscreen">全屏</button>
+      <button type="button" id="btnReset">重置</button>
+      <button type="button" id="btnHelp">帮助</button>
+      <div class="progress-wrap">
+        <div class="progress-bar"><i id="progressFill"></i></div>
+        <span id="progressText">0%</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <h2>文生视频流程模拟器 · 文化宣传片工作台</h2>
+      <p>离线拆解提示词、编排分镜时间线，并以 Canvas/SVG 占位场景模拟「文生视频 / 图生视频 / 多镜头」生成过程。主题聚焦泰山、黄河与孔子文化宣传。</p>
+      <div class="chip-row">
+        <span class="chip">提示词解构</span><span class="chip">分镜脚本</span>
+        <span class="chip">镜头预览</span><span class="chip">风险审查</span>
+      </div>
+      <div class="warn-banner">⚠️ 深度伪造与版权警示：生成式视频可能造成虚假信息与肖像侵权。课堂作品须标注“AI 模拟 / 非真实拍摄”，严禁用于误导公众或未经授权的商业传播。</div>
+    </div>
+    <div>
+      <svg viewBox="0 0 360 200" width="100%" height="180" role="img" aria-label="分镜工作台插图">
+        <defs>
+          <linearGradient id="vg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#5B4BDB"/><stop offset="100%" stop-color="#1BB8C9"/></linearGradient>
+        </defs>
+        <rect width="360" height="200" rx="24" fill="#14182E"/>
+        <rect x="24" y="36" width="100" height="60" rx="10" fill="url(#vg)" opacity=".9"/>
+        <rect x="136" y="36" width="100" height="60" rx="10" fill="#E8B84A" opacity=".85"/>
+        <rect x="248" y="36" width="88" height="60" rx="10" fill="#7EE8F0" opacity=".8"/>
+        <rect x="24" y="112" width="312" height="10" rx="5" fill="#2A3358"/>
+        <rect x="24" y="112" width="180" height="10" rx="5" fill="#E8B84A"/>
+        <text x="28" y="28" fill="#fff" font-size="15" font-family="PingFang SC,Microsoft YaHei,sans-serif">分镜时间线 · 实时预览</text>
+        <text x="28" y="160" fill="#AAB4E0" font-size="12" font-family="PingFang SC,Microsoft YaHei,sans-serif">Opening → Main → Transition → Ending</text>
+      </svg>
+    </div>
+  </section>
+
+  <nav class="module-nav" id="moduleNav">
+    <button type="button" data-mod="m1" class="active">① 提示词解构</button>
+    <button type="button" data-mod="m2">② 分镜时间线</button>
+    <button type="button" data-mod="m3">③ 生成流程模拟</button>
+    <button type="button" data-mod="m4">④ 镜头参数预览</button>
+    <button type="button" data-mod="m5">⑤ 风险审查导出</button>
+  </nav>
+
+  <!-- M1 -->
+  <section class="panel" id="m1">
+    <h3>① 视频提示词解构 · 主体 / 动作 / 环境 / 镜头 / 光线 / 风格</h3>
+    <p class="lead">将自然语言创意拆解为可控要素，提升文生视频指令的可执行性与文化表达准确性。</p>
+    <label class="field">原始创意描述
+      <textarea id="rawPrompt" placeholder="例如：清晨薄雾中的泰山南天门，镜头缓缓推进，金色阳光洒落石阶，国风纪录片质感……">清晨薄雾中的泰山南天门，镜头由远及近缓缓推进，金色阳光洒落石阶，游客身影虚化，国风纪录片质感，庄重而有呼吸感</textarea>
+    </label>
+    <div class="toolbar">
+      <button type="button" class="btn btn-primary" id="btnDecompose">智能拆解提示词</button>
+      <button type="button" class="btn btn-ghost" id="btnFillDemo">载入主题示例</button>
+    </div>
+    <div class="prompt-parts" id="promptParts"></div>
+    <div class="stat-row">
+      <div class="stat"><b id="stFilled">0/6</b><span>要素完整度</span></div>
+      <div class="stat"><b id="stChars">0</b><span>提示词字数</span></div>
+      <div class="stat"><b id="stTheme">泰山</b><span>文化主题</span></div>
+      <div class="stat"><b id="stScore">—</b><span>可执行评分</span></div>
+    </div>
+  </section>
+
+  <!-- M2 -->
+  <section class="panel hidden" id="m2">
+    <h3>② 分镜脚本设计器 · 开场 / 主体 / 转场 / 结尾</h3>
+    <p class="lead">编排宣传片结构，支持镜头重排、增删与段落标注。拖动排序或使用按钮调整顺序。</p>
+    <div class="theme-pills" id="themePills">
+      <button type="button" data-theme="taishan" class="active">泰山</button>
+      <button type="button" data-theme="huanghe" >黄河</button>
+      <button type="button" data-theme="kongzi" >孔子文化</button>
+    </div>
+    <div class="toolbar">
+      <button type="button" class="btn btn-primary" id="btnBuildStory">根据主题生成分镜</button>
+      <button type="button" class="btn btn-ghost" id="btnAddShot">新增镜头</button>
+    </div>
+    <div class="timeline" id="timeline"></div>
+    <label class="field">分镜脚本文本（可编辑汇总）
+      <textarea id="scriptText"></textarea>
+    </label>
+  </section>
+
+  <!-- M3 -->
+  <section class="panel hidden" id="m3">
+    <h3>③ 文生视频 / 图生视频 / 多镜头 流程模拟</h3>
+    <p class="lead">选择生成模式，观察离线占位场景如何按提示逐步“渲染”。无外部模型调用，仅为教学流程仿真。</p>
+    <div class="mode-tabs" id="modeTabs">
+      <button type="button" data-mode="t2v" class="active">文生视频</button>
+      <button type="button" data-mode="i2v">图生视频</button>
+      <button type="button" data-mode="multi">多镜头合成</button>
+    </div>
+    <div class="grid-2">
+      <div>
+        <div class="preview-stage"><canvas id="simCanvas" width="960" height="540"></canvas>
+          <div class="preview-overlay">
+            <span id="simStatus">待命</span>
+            <span id="simPct">0%</span>
+          </div>
+        </div>
+        <div class="toolbar">
+          <button type="button" class="btn btn-primary" id="btnRunSim">开始模拟生成</button>
+          <button type="button" class="btn btn-ghost" id="btnPauseSim">暂停</button>
+          <button type="button" class="btn btn-ghost" id="btnResetSim">重置画面</button>
+        </div>
+      </div>
+      <div>
+        <h4 style="margin:0 0 8px">流程日志</h4>
+        <div class="script-box" id="simLog">等待开始……</div>
+        <div class="warn-banner">说明：真实文生视频需云计算力与版权合规审查；本页用几何场景与动画示意“提示→分镜→渲染→合成”链路。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- M4 -->
+  <section class="panel hidden" id="m4">
+    <h3>④ 时长 · 景别 · 运镜 · 顺序 · 实时预览擦洗</h3>
+    <p class="lead">调节当前镜头参数，使用时间擦洗条预览整片节奏与画面切换。</p>
+    <div class="grid-2">
+      <div>
+        <label class="field">当前镜头
+          <select id="shotSelect"></select>
+        </label>
+        <div class="grid-3">
+          <label class="field">时长（秒）
+            <input type="number" id="shotDur" min="1" max="20" value="4" />
+          </label>
+          <label class="field">景别
+            <select id="shotSize"><option>远景</option><option>全景</option><option>中景</option><option>近景</option><option>特写</option></select>
+          </label>
+          <label class="field">运镜
+            <select id="cameraMove"><option>固定</option><option>推进</option><option>拉远</option><option>横移</option><option>升降</option><option>环绕</option></select>
+          </label>
+        </div>
+        <div class="toolbar">
+          <button type="button" class="btn btn-primary" id="btnApplyShot">应用参数</button>
+          <button type="button" class="btn btn-ghost" id="btnPlayPreview">播放预览</button>
+          <button type="button" class="btn btn-ghost" id="btnStopPreview">停止</button>
+        </div>
+        <div id="shotInfo" style="font-size:.88rem;color:var(--ink-soft)"></div>
+      </div>
+      <div>
+        <div class="preview-stage"><canvas id="previewCanvas" width="960" height="540"></canvas>
+          <div class="preview-overlay">
+            <span id="scrubLabel">00:00</span>
+            <input type="range" id="scrubber" min="0" max="1000" value="0" />
+            <span id="totalLabel">00:00</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- M5 -->
+  <section class="panel hidden" id="m5">
+    <h3>⑤ 风险检查 · 事实 / 文化 / 隐私 / 版权 / 水印 / 深度伪造</h3>
+    <p class="lead">导出前完成合规自查，生成脚本 + 分镜 + 检查清单作品包。</p>
+    <div class="grid-2">
+      <div>
+        <label class="field">作品标题<input id="workTitle" type="text" placeholder="如：泰山四季·文化宣传片（AI 模拟）" /></label>
+        <label class="field">小组 / 作者<input id="workAuthor" type="text" placeholder="姓名或小组" /></label>
+        <label class="field">创作说明
+          <textarea id="workNote" placeholder="说明使用的主题、生成模式、教学目标……"></textarea>
+        </label>
+        <div class="risk-grid" id="riskList"></div>
+      </div>
+      <div>
+        <h4 style="margin:0 0 8px">导出预览</h4>
+        <div class="script-box" id="exportPreview">尚未生成导出包</div>
+        <div class="toolbar">
+          <button type="button" class="btn btn-gold" id="btnExportPack">导出脚本+分镜+清单</button>
+          <button type="button" class="btn btn-primary" id="btnComplete">标记本节完成</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <p class="footer-note">山东教育出版社《人工智能通识·第一册》单元1第5节配套离线互动实验 · 本地存储键：sdep_ai_u1_s5_video_lab</p>
+</main>
+
+<div class="toast" id="toast"></div>
+<div class="modal-mask" id="helpModal">
+  <div class="modal">
+    <h3>使用帮助 · 第5节智能创作视频</h3>
+    <ol>
+      <li>输入创意并拆解为六要素提示词。</li>
+      <li>选择文化主题，生成并重排分镜时间线。</li>
+      <li>模拟文生视频 / 图生视频 / 多镜头流程。</li>
+      <li>调整时长、景别、运镜，用擦洗条预览。</li>
+      <li>完成风险检查后导出脚本、分镜与清单。</li>
+    </ol>
+    <p>所有画面均为 Canvas/SVG 离线占位，不调用云端生成接口。</p>
+    <div class="toolbar"><button type="button" class="btn btn-primary" id="closeHelp">知道了</button></div>
+  </div>
+</div>
+<input type="file" id="importFile" accept="application/json,.json" class="hidden" />
+
+<script>
+(function(){
+"use strict";
+const STORAGE_KEY = "sdep_ai_u1_s5_video_lab";
+const PARTS = [
+  {key:"subject", label:"主体", ph:"泰山南天门 / 黄河壶口 / 孔子讲学意象"},
+  {key:"action", label:"动作", ph:"缓缓推进、潮水奔涌、学子行礼"},
+  {key:"env", label:"环境", ph:"晨雾山峦、峡谷激流、杏坛庭院"},
+  {key:"lens", label:"镜头", ph:"远景开场转中景、稳定器跟拍"},
+  {key:"light", label:"光线", ph:"金色晨光、逆光轮廓、柔和侧光"},
+  {key:"style", label:"风格", ph:"国风纪录片、水墨动画、庄重宣传片"}
+];
+const THEMES = {
+  taishan:{
+    name:"泰山",
+    shots:[
+      {phase:"opening", title:"云海开篇", desc:"远景：泰山云海与日出轮廓", dur:4, size:"远景", cam:"拉远", theme:"taishan"},
+      {phase:"main", title:"石阶巡礼", desc:"中景：十八盘石阶拾级而上", dur:5, size:"中景", cam:"推进", theme:"taishan"},
+      {phase:"transition", title:"碑刻特写", desc:"特写：摩崖石刻纹理与光影", dur:3, size:"特写", cam:"横移", theme:"taishan"},
+      {phase:"ending", title:"南天门收束", desc:"全景：南天门金色天光", dur:4, size:"全景", cam:"升降", theme:"taishan"}
+    ]
+  },
+  huanghe:{
+    name:"黄河",
+    shots:[
+      {phase:"opening", title:"长河落日", desc:"远景：黄河转弯与晚霞", dur:4, size:"远景", cam:"横移", theme:"huanghe"},
+      {phase:"main", title:"壶口奔流", desc:"中景：壶口瀑布水雾腾跃", dur:5, size:"中景", cam:"推进", theme:"huanghe"},
+      {phase:"transition", title:"羊皮筏影子", desc:"近景：筏工剪影越过激流", dur:3, size:"近景", cam:"环绕", theme:"huanghe"},
+      {phase:"ending", title:"母亲河铭记", desc:"全景：河道舒展至天际", dur:4, size:"全景", cam:"拉远", theme:"huanghe"}
+    ]
+  },
+  kongzi:{
+    name:"孔子文化",
+    shots:[
+      {phase:"opening", title:"杏坛晨光", desc:"远景：孔庙屋檐与庭院晨光", dur:4, size:"远景", cam:"固定", theme:"kongzi"},
+      {phase:"main", title:"典籍翻页", desc:"特写：竹简/典籍翻动意象", dur:4, size:"特写", cam:"推进", theme:"kongzi"},
+      {phase:"transition", title:"学子行进", desc:"中景：青衿学子穿过回廊", dur:4, size:"中景", cam:"横移", theme:"kongzi"},
+      {phase:"ending", title:"礼乐回响", desc:"全景：殿宇钟声余韵留白", dur:4, size:"全景", cam:"拉远", theme:"kongzi"}
+    ]
+  }
+};
+const PHASE_LABEL = {opening:"开场", main:"主体", transition:"转场", ending:"结尾"};
+const RISKS = [
+  {id:"r1", cat:"事实核验", text:"未将模拟生成画面表述为真实新闻或历史实拍"},
+  {id:"r2", cat:"文化尊重", text:"对泰山/黄河/孔子等文化符号的表达庄重得体，无戏谑歪曲"},
+  {id:"r3", cat:"隐私保护", text:"未使用可识别真实人物肖像或未经授权的学生影像"},
+  {id:"r4", cat:"版权合规", text:"音乐、字体、素材来源清晰，或仅使用本实验占位资源"},
+  {id:"r5", cat:"水印标识", text:"成片/课堂展示标注“AI 模拟生成”水印或字幕"},
+  {id:"r6", cat:"深度伪造", text:"不制作误导性换脸/假发言内容，不用于诽谤或欺诈"}
+];
+
+const state = {
+  rawPrompt:"", parts:{}, theme:"taishan", shots:[], mode:"t2v",
+  activeShot:0, simProgress:0, workTitle:"", workAuthor:"", workNote:"",
+  risks:{}, modulesDone:{m1:false,m2:false,m3:false,m4:false,m5:false}, activeMod:"m1"
+};
+
+let simTimer=null, previewTimer=null, scrubPlaying=false, animT=0;
+
+function $(id){return document.getElementById(id)}
+function toast(msg){const t=$("toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),2200)}
+function uid(){return "s"+Math.random().toString(36).slice(2,8)}
+
+function renderParts(){
+  const box=$("promptParts"); box.innerHTML="";
+  PARTS.forEach(p=>{
+    const val=state.parts[p.key]||"";
+    const el=document.createElement("div");
+    el.className="part-card"+(val.trim()?" ok":"");
+    el.innerHTML=`<h4>${p.label}</h4><label class="field"><input data-part="${p.key}" value="${escapeAttr(val)}" placeholder="${p.ph}" /></label>`;
+    el.querySelector("input").oninput=(e)=>{state.parts[p.key]=e.target.value; renderPartStats(); saveSilent()};
+    box.appendChild(el);
+  });
+  renderPartStats();
+}
+function escapeAttr(s){return String(s).replace(/"/g,"&quot;").replace(/</g,"&lt;")}
+function renderPartStats(){
+  const filled=PARTS.filter(p=>(state.parts[p.key]||"").trim()).length;
+  $("stFilled").textContent=filled+"/6";
+  $("stChars").textContent=($("rawPrompt").value||"").length;
+  $("stTheme").textContent=THEMES[state.theme].name;
+  const score=Math.round(filled/6*70 + Math.min(30, ($("rawPrompt").value||"").length/4));
+  $("stScore").textContent=score;
+  if(filled>=5) markDone("m1");
+  updateProgress();
+}
+function decompose(){
+  const text=($("rawPrompt").value||"").trim();
+  state.rawPrompt=text;
+  if(!text){toast("请先填写创意描述"); return}
+  const rules=[
+    ["subject", /(泰山|南天门|黄河|壶口|孔子|孔庙|杏坛|学子|山峰|河流)[^，。,\s]*/],
+    ["action", /(推进|拉远|奔涌|翻动|行礼|拾级|横移|环绕|升起|穿过)[^，。,\s]*/],
+    ["env", /(晨雾|云海|峡谷|庭院|石阶|晚霞|回廊|殿宇|激流)[^，。,\s]*/],
+    ["lens", /(远景|全景|中景|近景|特写|镜头|跟拍|稳定器)[^，。,\s]*/],
+    ["light", /(金色|晨光|逆光|侧光|天光|柔和|阳光)[^，。,\s]*/],
+    ["style", /(国风|纪录片|水墨|宣传片|庄重|呼吸感|电影感)[^，。,\s]*/]
+  ];
+  const parts={};
+  rules.forEach(([k,re])=>{const m=text.match(re); parts[k]=m?m[0]:""});
+  // fallbacks from theme
+  if(!parts.subject) parts.subject=THEMES[state.theme].name+"意象主体";
+  if(!parts.action) parts.action="镜头缓缓推进";
+  if(!parts.env) parts.env="文化地标环境";
+  if(!parts.lens) parts.lens="远景转入中景";
+  if(!parts.light) parts.light="金色自然光";
+  if(!parts.style) parts.style="国风纪录片质感";
+  state.parts=parts;
+  renderParts();
+  markDone("m1"); updateProgress(); toast("提示词已拆解为六要素"); saveSilent();
+}
+function fillDemo(){
+  const demos={
+    taishan:"清晨薄雾中的泰山南天门，镜头由远及近缓缓推进，金色阳光洒落石阶，国风纪录片质感，庄重而有呼吸感",
+    huanghe:"黄昏时分的黄河壶口，激流奔涌水雾升腾，航拍横移后推进至浪花特写，史诗纪录片风格，暖金色逆光",
+    kongzi:"孔庙杏坛晨光中，青衿学子穿过回廊，竹简翻页特写与钟声呼应，镜头固定转缓推，礼乐文化宣传片风格"
+  };
+  $("rawPrompt").value=demos[state.theme];
+  decompose();
+}
+
+function buildShots(theme){
+  state.theme=theme;
+  state.shots=THEMES[theme].shots.map(s=>({...s, id:uid()}));
+  state.activeShot=0;
+  renderTimeline(); renderScript(); renderShotSelect(); drawPreviewFrame(0);
+  markDone("m2"); updateProgress(); toast("已生成「"+THEMES[theme].name+"」分镜"); saveSilent();
+}
+function renderTimeline(){
+  const box=$("timeline"); box.innerHTML="";
+  state.shots.forEach((shot,idx)=>{
+    const el=document.createElement("div");
+    el.className="shot"+(idx===state.activeShot?" active":"");
+    el.draggable=true;
+    el.innerHTML=`
+      <div class="thumb"><canvas width="200" height="100" data-mini="${idx}"></canvas></div>
+      <strong>${PHASE_LABEL[shot.phase]||shot.phase} · ${shot.title}</strong>
+      <div class="meta">${shot.size} · ${shot.cam} · ${shot.dur}s</div>
+      <div class="meta">${shot.desc}</div>
+      <div class="shot-actions">
+        <button type="button" data-act="up">前移</button>
+        <button type="button" data-act="down">后移</button>
+        <button type="button" data-act="del">删除</button>
+      </div>`;
+    el.onclick=(e)=>{if(e.target.closest("button")) return; state.activeShot=idx; renderTimeline(); renderShotSelect(); fillShotForm(); drawPreviewFrame(timeAtShot(idx));};
+    el.querySelector('[data-act="up"]').onclick=(e)=>{e.stopPropagation(); moveShot(idx,-1)};
+    el.querySelector('[data-act="down"]').onclick=(e)=>{e.stopPropagation(); moveShot(idx,1)};
+    el.querySelector('[data-act="del"]').onclick=(e)=>{e.stopPropagation(); delShot(idx)};
+    el.ondragstart=(e)=>{e.dataTransfer.setData("text/plain", String(idx)); el.style.opacity=.5};
+    el.ondragend=()=>{el.style.opacity=1};
+    el.ondragover=(e)=>e.preventDefault();
+    el.ondrop=(e)=>{
+      e.preventDefault();
+      const from=+e.dataTransfer.getData("text/plain");
+      const to=idx; if(from===to) return;
+      const item=state.shots.splice(from,1)[0]; state.shots.splice(to,0,item);
+      state.activeShot=to; renderTimeline(); renderScript(); renderShotSelect(); saveSilent(); toast("镜头顺序已更新");
+    };
+    box.appendChild(el);
+    drawThemeScene(el.querySelector("canvas"), shot.theme||state.theme, 0.35+idx*0.1, shot.size);
+  });
+}
+function moveShot(idx,dir){
+  const j=idx+dir; if(j<0||j>=state.shots.length) return;
+  const t=state.shots[idx]; state.shots[idx]=state.shots[j]; state.shots[j]=t;
+  state.activeShot=j; renderTimeline(); renderScript(); renderShotSelect(); saveSilent();
+}
+function delShot(idx){
+  if(state.shots.length<=1){toast("至少保留 1 个镜头"); return}
+  state.shots.splice(idx,1); state.activeShot=Math.max(0,idx-1);
+  renderTimeline(); renderScript(); renderShotSelect(); saveSilent();
+}
+function renderScript(){
+  const lines=state.shots.map((s,i)=>`${i+1}. 【${PHASE_LABEL[s.phase]||s.phase}】${s.title}（${s.dur}s · ${s.size} · ${s.cam}）\n   ${s.desc}`);
+  $("scriptText").value=lines.join("\n\n");
+}
+function addShot(){
+  const phases=["opening","main","transition","ending"];
+  const phase=phases[state.shots.length%4];
+  state.shots.push({id:uid(), phase, title:"新镜头", desc:"请编辑镜头描述", dur:3, size:"中景", cam:"固定", theme:state.theme});
+  state.activeShot=state.shots.length-1;
+  renderTimeline(); renderScript(); renderShotSelect(); fillShotForm(); saveSilent(); toast("已新增镜头");
+}
+
+function drawThemeScene(canvas, theme, t, size){
+  const ctx=canvas.getContext("2d");
+  const w=canvas.width, h=canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const zoom = size==="特写"?1.45: size==="近景"?1.25: size==="中景"?1.1: size==="远景"?0.85:1;
+  const panX = Math.sin(t*1.2)*12; const panY=Math.cos(t*0.8)*6;
+  ctx.save();
+  ctx.translate(w/2+panX, h/2+panY); ctx.scale(zoom,zoom); ctx.translate(-w/2,-h/2);
+  if(theme==="huanghe"){
+    const g=ctx.createLinearGradient(0,0,0,h); g.addColorStop(0,"#F6C26B"); g.addColorStop(1,"#C45C26");
+    ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+    ctx.fillStyle="#1F4E79";
+    ctx.beginPath(); ctx.moveTo(0,h*0.55);
+    for(let x=0;x<=w;x+=8){ctx.lineTo(x, h*0.55 + Math.sin(x*0.05+t*3)*10 + Math.sin(x*0.02+t)*6)}
+    ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,.35)";
+    for(let i=0;i<8;i++){ctx.beginPath();ctx.arc((t*40+i*40)%w, h*0.6+Math.sin(i+t)*8, 3,0,Math.PI*2);ctx.fill()}
+  } else if(theme==="kongzi"){
+    const g=ctx.createLinearGradient(0,0,0,h); g.addColorStop(0,"#F3E6C8"); g.addColorStop(1,"#C9A66B");
+    ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+    ctx.fillStyle="#7A2E1C";
+    ctx.fillRect(w*0.2,h*0.45,w*0.6,h*0.12);
+    ctx.beginPath(); ctx.moveTo(w*0.15,h*0.45); ctx.lineTo(w*0.5,h*0.28); ctx.lineTo(w*0.85,h*0.45); ctx.fill();
+    ctx.strokeStyle="#5B4BDB"; ctx.lineWidth=2;
+    for(let i=0;i<5;i++){ctx.beginPath();ctx.moveTo(w*0.3+i*18,h*0.7);ctx.lineTo(w*0.3+i*18,h*0.85);ctx.stroke()}
+    ctx.fillStyle="rgba(91,75,219,.25)"; ctx.fillRect(w*0.35,h*0.58,w*0.3,h*0.08);
+  } else {
+    // taishan default
+    const g=ctx.createLinearGradient(0,0,0,h); g.addColorStop(0,"#7EC8E3"); g.addColorStop(.55,"#E8B84A"); g.addColorStop(1,"#5B4BDB");
+    ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+    ctx.fillStyle="#2F3A6B";
+    ctx.beginPath(); ctx.moveTo(0,h*0.75); ctx.lineTo(w*0.25,h*0.4); ctx.lineTo(w*0.45,h*0.55); ctx.lineTo(w*0.7,h*0.28); ctx.lineTo(w,h*0.6); ctx.lineTo(w,h); ctx.lineTo(0,h); ctx.fill();
+    ctx.fillStyle="rgba(255,255,255,.55)";
+    for(let i=0;i<6;i++){ctx.beginPath();ctx.ellipse((i*40+t*20)%w, h*0.35+Math.sin(i)*8, 28,10,0,0,Math.PI*2);ctx.fill()}
+    ctx.fillStyle="#E8B84A"; ctx.beginPath(); ctx.arc(w*0.78,h*0.22,14,0,Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+  // watermark
+  ctx.fillStyle="rgba(255,255,255,.55)";
+  ctx.font="12px PingFang SC,Microsoft YaHei,sans-serif";
+  ctx.fillText("AI 模拟", 8, h-8);
+}
+
+function logSim(line){
+  const box=$("simLog");
+  const t=new Date().toLocaleTimeString();
+  box.textContent += `\n[${t}] ${line}`;
+  box.scrollTop=box.scrollHeight;
+}
+function runSim(){
+  if(!state.shots.length){toast("请先生成分镜"); return}
+  clearInterval(simTimer); state.simProgress=0; $("simLog").textContent="初始化管道……";
+  const steps = state.mode==="t2v"
+    ? ["解析文本提示词","映射六要素语义","采样潜空间轨迹","逐帧解码渲染","时序平滑","输出预览片"]
+    : state.mode==="i2v"
+    ? ["载入关键帧占位图","提取构图与色彩","动作场估计","帧间插值","细节增强","输出动态预览"]
+    : ["读取分镜序列","镜头边界对齐","转场融合","多镜头拼接","节奏重采样","成片合成预览"];
+  let i=0;
+  markDone("m3");
+  simTimer=setInterval(()=>{
+    if(i>=steps.length){ clearInterval(simTimer); $("simStatus").textContent="完成"; $("simPct").textContent="100%"; toast("模拟生成完成"); updateProgress(); saveSilent(); return}
+    state.simProgress=Math.round((i+1)/steps.length*100);
+    $("simStatus").textContent=steps[i]; $("simPct").textContent=state.simProgress+"%";
+    logSim(steps[i]+" … OK");
+    const shot=state.shots[Math.min(i, state.shots.length-1)];
+    drawThemeScene($("simCanvas"), shot.theme||state.theme, (i+1)*0.35, shot.size);
+    // progress bar overlay
+    const ctx=$("simCanvas").getContext("2d");
+    ctx.fillStyle="rgba(232,184,74,.85)"; ctx.fillRect(0,$("simCanvas").height-8, $("simCanvas").width*state.simProgress/100, 8);
+    i++;
+  }, 550);
+}
+function pauseSim(){clearInterval(simTimer); $("simStatus").textContent="已暂停"; toast("模拟已暂停")}
+function resetSim(){
+  clearInterval(simTimer); state.simProgress=0; $("simPct").textContent="0%"; $("simStatus").textContent="待命";
+  $("simLog").textContent="已重置"; const c=$("simCanvas"); c.getContext("2d").clearRect(0,0,c.width,c.height);
+  drawThemeScene(c, state.theme, 0.2, "全景");
+}
+
+function totalDuration(){return state.shots.reduce((a,s)=>a+(+s.dur||1),0)}
+function timeAtShot(idx){return state.shots.slice(0,idx).reduce((a,s)=>a+(+s.dur||1),0)}
+function shotAtTime(t){
+  let acc=0;
+  for(let i=0;i<state.shots.length;i++){
+    acc+=(+state.shots[i].dur||1);
+    if(t<=acc) return {idx:i, local:t-(acc-(+state.shots[i].dur||1)), shot:state.shots[i]};
+  }
+  const last=state.shots[state.shots.length-1];
+  return {idx:state.shots.length-1, local:+last.dur||1, shot:last};
+}
+function fmt(sec){const s=Math.floor(sec%60), m=Math.floor(sec/60); return String(m).padStart(2,"0")+":"+String(s).padStart(2,"0")}
+function renderShotSelect(){
+  const sel=$("shotSelect"); sel.innerHTML="";
+  state.shots.forEach((s,i)=>{
+    const opt=document.createElement("option"); opt.value=i; opt.textContent=`${i+1}. ${PHASE_LABEL[s.phase]} · ${s.title}`;
+    sel.appendChild(opt);
+  });
+  sel.value=String(state.activeShot||0);
+  fillShotForm();
+}
+function fillShotForm(){
+  const s=state.shots[state.activeShot]; if(!s) return;
+  $("shotDur").value=s.dur; $("shotSize").value=s.size; $("cameraMove").value=s.cam;
+  $("shotInfo").textContent=`段落：${PHASE_LABEL[s.phase]}｜描述：${s.desc}`;
+  $("totalLabel").textContent=fmt(totalDuration());
+}
+function applyShot(){
+  const s=state.shots[state.activeShot]; if(!s) return;
+  s.dur=+$("shotDur").value||3; s.size=$("shotSize").value; s.cam=$("cameraMove").value;
+  renderTimeline(); renderScript(); fillShotForm(); drawPreviewFrame(timeAtShot(state.activeShot));
+  markDone("m4"); updateProgress(); toast("镜头参数已应用"); saveSilent();
+}
+function drawPreviewFrame(timeSec){
+  if(!state.shots.length) return;
+  const info=shotAtTime(timeSec);
+  const s=info.shot; const localT=info.local;
+  let motion=localT/(+s.dur||1);
+  if(s.cam==="推进") motion*=1.2;
+  if(s.cam==="拉远") motion=1-motion*0.8;
+  if(s.cam==="横移") motion+=0.3;
+  drawThemeScene($("previewCanvas"), s.theme||state.theme, motion*2, s.size);
+  const ctx=$("previewCanvas").getContext("2d");
+  ctx.fillStyle="rgba(20,24,46,.45)"; ctx.fillRect(0,0,$("previewCanvas").width,40);
+  ctx.fillStyle="#fff"; ctx.font="20px PingFang SC,Microsoft YaHei,sans-serif";
+  ctx.fillText(`${PHASE_LABEL[s.phase]} · ${s.title} · ${s.cam}`, 16, 28);
+  $("scrubLabel").textContent=fmt(timeSec);
+  $("scrubber").max=Math.max(1, Math.round(totalDuration()*100));
+  $("scrubber").value=Math.round(timeSec*100);
+  $("totalLabel").textContent=fmt(totalDuration());
+}
+function playPreview(){
+  if(!state.shots.length){toast("暂无分镜"); return}
+  clearInterval(previewTimer); scrubPlaying=true; markDone("m4");
+  let t= (+$("scrubber").value||0)/100;
+  previewTimer=setInterval(()=>{
+    t+=0.1; if(t>=totalDuration()){t=0}
+    drawPreviewFrame(t);
+  },100);
+}
+function stopPreview(){clearInterval(previewTimer); scrubPlaying=false; toast("预览已停止")}
+
+function renderRisks(){
+  const box=$("riskList"); box.innerHTML="";
+  RISKS.forEach(r=>{
+    const checked=!!state.risks[r.id];
+    const el=document.createElement("label");
+    el.className="risk-item"+(checked?" pass":"");
+    el.innerHTML=`<input type="checkbox" ${checked?"checked":""}/><div><b>${r.cat}</b><div style="font-size:.86rem;color:var(--ink-soft)">${r.text}</div></div><span class="tag">${checked?"已确认":"待确认"}</span>`;
+    el.querySelector("input").onchange=(e)=>{
+      state.risks[r.id]=e.target.checked;
+      renderRisks(); updateProgress(); saveSilent();
+    };
+    box.appendChild(el);
+  });
+}
+function buildExportPack(){
+  const missing=RISKS.filter(r=>!state.risks[r.id]);
+  if(missing.length){toast("请先确认全部风险检查项"); return null}
+  if(!state.shots.length){toast("分镜为空"); return null}
+  const pack={
+    meta:{lab:"单元1第5节智能创作视频", theme:THEMES[state.theme].name, mode:state.mode, exportedAt:new Date().toISOString(),
+      notice:"本导出包为教学模拟脚本与分镜，画面为占位预览，须标注 AI 模拟，注意事实、文化、隐私、版权与深度伪造风险。"},
+    prompt:{raw:state.rawPrompt||$("rawPrompt").value, parts:state.parts},
+    storyboard:state.shots,
+    script:$("scriptText").value,
+    work:{title:state.workTitle||$("workTitle").value, author:state.workAuthor||$("workAuthor").value, note:state.workNote||$("workNote").value},
+    checklist:RISKS.map(r=>({id:r.id, category:r.cat, text:r.text, confirmed:!!state.risks[r.id]}))
+  };
+  return pack;
+}
+
+function markDone(m){state.modulesDone[m]=true}
+function updateProgress(){
+  let score=0;
+  const filled=PARTS.filter(p=>(state.parts[p.key]||"").trim()).length;
+  score += Math.round(filled/6*20);
+  if(state.shots.length>=4) score+=20;
+  if(state.modulesDone.m3 || state.simProgress>=100) score+=20;
+  if(state.modulesDone.m4) score+=15;
+  const riskOk=RISKS.filter(r=>state.risks[r.id]).length;
+  score += Math.round(riskOk/RISKS.length*25);
+  score=Math.min(100,score);
+  $("progressFill").style.width=score+"%"; $("progressText").textContent=score+"%";
+}
+function switchMod(id){
+  state.activeMod=id;
+  ["m1","m2","m3","m4","m5"].forEach(m=>$(m).classList.toggle("hidden", m!==id));
+  document.querySelectorAll("#moduleNav button").forEach(b=>b.classList.toggle("active", b.dataset.mod===id));
+  if(id==="m2"){renderTimeline(); renderScript()}
+  if(id==="m3"){resetSim()}
+  if(id==="m4"){renderShotSelect(); drawPreviewFrame(0)}
+  if(id==="m5") renderRisks();
+}
+function gather(){
+  state.rawPrompt=$("rawPrompt").value;
+  state.workTitle=$("workTitle").value; state.workAuthor=$("workAuthor").value; state.workNote=$("workNote").value;
+  return JSON.parse(JSON.stringify(state));
+}
+function applyState(data){
+  Object.assign(state, data);
+  $("rawPrompt").value=state.rawPrompt||"";
+  $("workTitle").value=state.workTitle||""; $("workAuthor").value=state.workAuthor||""; $("workNote").value=state.workNote||"";
+  document.querySelectorAll("#themePills button").forEach(b=>b.classList.toggle("active", b.dataset.theme===state.theme));
+  document.querySelectorAll("#modeTabs button").forEach(b=>b.classList.toggle("active", b.dataset.mode===state.mode));
+  renderParts(); if(state.shots.length){renderTimeline(); renderScript(); renderShotSelect()}
+  renderRisks(); updateProgress(); switchMod(state.activeMod||"m1");
+}
+function saveSilent(){try{localStorage.setItem(STORAGE_KEY, JSON.stringify(gather()))}catch(e){}}
+function save(){saveSilent(); toast("已保存到本地浏览器")}
+function exportJSON(payload, filename){
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=filename; a.click(); URL.revokeObjectURL(a.href);
+}
+function load(){try{const raw=localStorage.getItem(STORAGE_KEY); if(raw) applyState(JSON.parse(raw))}catch(e){}}
+function resetAll(){if(!confirm("确定重置本节全部进度？")) return; clearInterval(simTimer); clearInterval(previewTimer); localStorage.removeItem(STORAGE_KEY); location.reload()}
+
+// bind
+document.querySelectorAll("#moduleNav button").forEach(b=>b.onclick=()=>switchMod(b.dataset.mod));
+$("btnDecompose").onclick=decompose;
+$("btnFillDemo").onclick=fillDemo;
+$("rawPrompt").addEventListener("input", renderPartStats);
+document.querySelectorAll("#themePills button").forEach(b=>b.onclick=()=>{
+  state.theme=b.dataset.theme;
+  document.querySelectorAll("#themePills button").forEach(x=>x.classList.toggle("active", x===b));
+  $("stTheme").textContent=THEMES[state.theme].name; saveSilent();
+});
+$("btnBuildStory").onclick=()=>buildShots(state.theme);
+$("btnAddShot").onclick=addShot;
+$("scriptText").addEventListener("change",()=>saveSilent());
+document.querySelectorAll("#modeTabs button").forEach(b=>b.onclick=()=>{
+  state.mode=b.dataset.mode;
+  document.querySelectorAll("#modeTabs button").forEach(x=>x.classList.toggle("active", x===b));
+  toast("生成模式："+({t2v:"文生视频",i2v:"图生视频",multi:"多镜头合成"}[state.mode]));
+  saveSilent();
+});
+$("btnRunSim").onclick=runSim; $("btnPauseSim").onclick=pauseSim; $("btnResetSim").onclick=resetSim;
+$("shotSelect").onchange=()=>{state.activeShot=+$("shotSelect").value; fillShotForm(); renderTimeline(); drawPreviewFrame(timeAtShot(state.activeShot))};
+$("btnApplyShot").onclick=applyShot;
+$("btnPlayPreview").onclick=playPreview; $("btnStopPreview").onclick=stopPreview;
+$("scrubber").oninput=()=>{stopPreview(); drawPreviewFrame((+$("scrubber").value)/100); markDone("m4"); updateProgress()};
+$("btnExportPack").onclick=()=>{
+  state.workTitle=$("workTitle").value; state.workAuthor=$("workAuthor").value; state.workNote=$("workNote").value;
+  const pack=buildExportPack(); if(!pack) return;
+  $("exportPreview").textContent=JSON.stringify(pack,null,2);
+  exportJSON(pack, "视频分镜作品包_"+(pack.work.title||"未命名")+".json");
+  markDone("m5"); updateProgress(); toast("已导出脚本+分镜+清单");
+};
+$("btnComplete").onclick=()=>{
+  if(RISKS.some(r=>!state.risks[r.id])){toast("请完成全部风险检查"); return}
+  markDone("m5"); updateProgress(); save(); toast("本节实验已标记完成");
+};
+$("btnSave").onclick=save;
+$("btnExport").onclick=()=>exportJSON({type:STORAGE_KEY, savedAt:new Date().toISOString(), state:gather()}, "lab_u1_s5_video.json");
+$("btnImport").onclick=()=>$("importFile").click();
+$("importFile").onchange=(ev)=>{
+  const f=ev.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=()=>{try{const obj=JSON.parse(reader.result); applyState(obj.state||obj); saveSilent(); toast("导入成功")}catch(e){toast("导入失败")}};
+  reader.readAsText(f);
+};
+$("btnFullscreen").onclick=()=>{if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.()};
+$("btnReset").onclick=resetAll;
+$("btnHelp").onclick=()=>$("helpModal").classList.add("show");
+$("closeHelp").onclick=()=>$("helpModal").classList.remove("show");
+
+// init
+PARTS.forEach(p=>state.parts[p.key]="");
+renderParts();
+buildShots("taishan");
+resetSim();
+renderRisks();
+load();
+updateProgress();
+})();
+</script>
+</body>
+</html>
