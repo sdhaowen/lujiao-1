@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>人工智能创作与机器感知互动实验室 · 通识第一册</title>
+<style>
+:root {
+  --bg0: #071525;
+  --bg1: #0c2440;
+  --bg2: #14325a;
+  --violet: #6b7cff;
+  --cyan: #2ec4d6;
+  --gold: #e2b15c;
+  --teal: #1bb8a8;
+  --orange: #f08a3a;
+  --card: rgba(248, 250, 253, 0.92);
+  --text: #102033;
+  --soft: #5a6b80;
+  --line: rgba(255,255,255,.14);
+  --font: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --shadow: 0 16px 40px rgba(3, 14, 30, 0.35);
+  --radius: 18px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; font-family: var(--font); }
+body {
+  color: #eef5ff;
+  background:
+    radial-gradient(900px 480px at 8% -8%, rgba(107,124,255,.28), transparent 55%),
+    radial-gradient(800px 420px at 92% 0%, rgba(46,196,214,.18), transparent 50%),
+    radial-gradient(700px 380px at 50% 100%, rgba(226,177,92,.12), transparent 55%),
+    linear-gradient(165deg, var(--bg0), var(--bg1) 45%, var(--bg2));
+}
+a { color: inherit; text-decoration: none; }
+.wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 64px; }
+.top {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  margin-bottom: 28px;
+}
+.logo {
+  width: 48px; height: 48px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--cyan), var(--violet));
+  display: grid; place-items: center;
+  box-shadow: 0 8px 20px rgba(46,196,214,.28);
+}
+.logo svg { width: 28px; height: 28px; }
+.brand h1 {
+  margin: 0; font-size: clamp(22px, 3vw, 30px); letter-spacing: .02em;
+}
+.brand p { margin: 4px 0 0; color: rgba(238,245,255,.72); font-size: 14px; }
+.actions { margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 44px; padding: 0 16px; border-radius: 12px;
+  border: 1px solid var(--line); background: rgba(255,255,255,.08);
+  color: #eef5ff; font: inherit; font-size: 15px; cursor: pointer;
+}
+.btn:hover { background: rgba(255,255,255,.14); }
+.btn.primary {
+  background: linear-gradient(135deg, var(--cyan), #1a9eaf);
+  border-color: transparent; color: #042229; font-weight: 700;
+}
+.hero {
+  display: grid; grid-template-columns: 1.2fr .8fr; gap: 22px;
+  margin-bottom: 34px;
+}
+@media (max-width: 900px) { .hero { grid-template-columns: 1fr; } }
+.hero-card, .stat-card {
+  border-radius: var(--radius);
+  background: linear-gradient(160deg, rgba(255,255,255,.1), rgba(255,255,255,.04));
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(10px);
+}
+.hero-card { padding: 28px 28px 24px; position: relative; overflow: hidden; }
+.hero-card::before {
+  content: ""; position: absolute; inset: auto -20% -40% 40%;
+  height: 220px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(226,177,92,.22), transparent 65%);
+  pointer-events: none;
+}
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 4px 12px; border-radius: 999px;
+  border: 1px solid rgba(226,177,92,.45); color: var(--gold);
+  font-size: 12px; letter-spacing: .08em;
+}
+.hero-card h2 {
+  margin: 14px 0 10px; font-size: clamp(26px, 4vw, 40px); line-height: 1.25;
+}
+.hero-card .lead {
+  margin: 0 0 18px; max-width: 52ch; color: rgba(238,245,255,.78);
+  font-size: 16px; line-height: 1.7;
+}
+.flow {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px;
+}
+.flow span {
+  padding: 6px 10px; border-radius: 999px; font-size: 12px;
+  background: rgba(46,196,214,.12); border: 1px solid rgba(46,196,214,.28);
+}
+.note {
+  font-size: 13px; color: rgba(238,245,255,.62); line-height: 1.6;
+}
+.stats {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.stat-card { padding: 18px; }
+.stat-card strong {
+  display: block; font-size: 28px; color: #fff; margin-bottom: 4px;
+}
+.stat-card span { color: rgba(238,245,255,.65); font-size: 13px; }
+
+.section { margin-bottom: 36px; }
+.section-head {
+  display: flex; flex-wrap: wrap; align-items: end; gap: 12px;
+  margin-bottom: 16px;
+}
+.section-head h3 { margin: 0; font-size: 22px; }
+.section-head p { margin: 0; color: rgba(238,245,255,.65); font-size: 14px; }
+.badge {
+  padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;
+}
+.badge.u1 { background: rgba(107,124,255,.2); color: #c7ceff; border: 1px solid rgba(107,124,255,.35); }
+.badge.u2 { background: rgba(27,184,168,.18); color: #9ff0e6; border: 1px solid rgba(27,184,168,.35); }
+
+.grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px;
+}
+.card {
+  display: flex; flex-direction: column; gap: 10px;
+  padding: 18px; border-radius: 16px; min-height: 210px;
+  background: var(--card); color: var(--text);
+  border: 1px solid rgba(255,255,255,.55);
+  box-shadow: 0 10px 28px rgba(3,14,30,.22);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 16px 36px rgba(3,14,30,.3);
+}
+.card .meta {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+}
+.card .num {
+  width: 34px; height: 34px; border-radius: 10px;
+  display: grid; place-items: center; font-weight: 800; color: #fff; font-size: 14px;
+}
+.u1 .num { background: linear-gradient(135deg, var(--violet), var(--cyan)); }
+.u2 .num { background: linear-gradient(135deg, var(--teal), #0d6e8a); }
+.card .pages { font-size: 12px; color: var(--soft); }
+.card h4 { margin: 0; font-size: 18px; }
+.card .desc { margin: 0; flex: 1; font-size: 14px; line-height: 1.6; color: var(--soft); }
+.card .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.card .tags span {
+  font-size: 11px; padding: 3px 8px; border-radius: 999px;
+  background: rgba(16,32,51,.06); color: #33455c;
+}
+.card .go {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 44px; border-radius: 12px; font-weight: 700; font-size: 15px;
+}
+.u1 .go { background: linear-gradient(135deg, #6b7cff, #3eb6d8); color: #fff; }
+.u2 .go { background: linear-gradient(135deg, #1bb8a8, #0d7a8a); color: #fff; }
+
+.footer {
+  margin-top: 28px; padding: 18px 20px; border-radius: 16px;
+  border: 1px solid var(--line); background: rgba(255,255,255,.05);
+  font-size: 13px; line-height: 1.7; color: rgba(238,245,255,.7);
+}
+.footer strong { color: #fff; }
+@media (prefers-reduced-motion: reduce) {
+  .card { transition: none; }
+  .card:hover { transform: none; }
+}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#042229" stroke-width="1.8">
+          <circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>
+        </svg>
+      </div>
+      <div class="brand">
+        <h1>人工智能创作与机器感知互动实验室</h1>
+        <p>山东教育出版社《人工智能通识·第一册》配套离线互动工具 · 2 单元 · 10 节课</p>
+      </div>
+      <div class="actions">
+        <a class="btn" href="使用说明.html">使用说明</a>
+        <button class="btn primary" type="button" id="btnFullscreen">课堂全屏</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div class="hero-card">
+        <div class="eyebrow">OFFLINE LAB · 本地互动 · 不上传隐私</div>
+        <h2>发现 AI · 拆解任务 · 调整参数 · 比较结果 · 反思伦理</h2>
+        <p class="lead">
+          本套工具不是电子课本或平台入口，而是可离线运行的创作与感知实验室。
+          学生通过提示词、分镜、特征匹配、OCR 流水线和分类训练等真实操作，理解人工智能原理与安全边界。
+        </p>
+        <div class="flow">
+          <span>输入与配置</span><span>过程可视化</span><span>即时反馈</span>
+          <span>错误诊断</span><span>项目导出</span><span>伦理核验</span>
+        </div>
+        <p class="note">全部数据仅保存在本机浏览器（localStorage）。不采集真实人脸、账号、车牌或隐私信息；识别与生成结果均为离线规则模拟，需人工核验。</p>
+      </div>
+      <div class="stats">
+        <div class="stat-card"><strong>10</strong><span>独立 HTML 互动课</span></div>
+        <div class="stat-card"><strong>2</strong><span>单元贯通项目</span></div>
+        <div class="stat-card"><strong>0</strong><span>外部 CDN / 联网 API</span></div>
+        <div class="stat-card"><strong>100%</strong><span>可离线课堂演示</span></div>
+      </div>
+    </section>
+
+    <section class="section" id="unit1">
+      <div class="section-head">
+        <span class="badge u1">第一单元</span>
+        <h3>初探人工智能世界</h3>
+        <p>生成创作线：调查 → 文本 → 绘画 → 音乐 → 视频 · 紫蓝 / 青蓝 / 暖金</p>
+      </div>
+      <div class="grid">
+        <a class="card u1" href="labs/单元1_第1节_走近人工智能.html">
+          <div class="meta"><div class="num">01</div><div class="pages">教材 P2–8 · PDF 9–15</div></div>
+          <h4>走近人工智能</h4>
+          <p class="desc">AI 发展时间轴、看听说想动能力拼图、身边 AI 应用地图，比较自动化与智能设备。</p>
+          <div class="tags"><span>时间轴</span><span>能力配对</span><span>应用地图</span></div>
+          <div class="go">进入实验室 →</div>
+        </a>
+        <a class="card u1" href="labs/单元1_第2节_智能生成文本.html">
+          <div class="meta"><div class="num">02</div><div class="pages">教材 P9–15 · PDF 16–22</div></div>
+          <h4>智能生成文本</h4>
+          <p class="desc">结构化提示词拼装、模糊与具体对比、多轮优化与依据 / 虚构 / 隐私核验工作台。</p>
+          <div class="tags"><span>提示词</span><span>多轮优化</span><span>核验</span></div>
+          <div class="go">进入实验室 →</div>
+        </a>
+        <a class="card u1" href="labs/单元1_第3节_智能创意绘画.html">
+          <div class="meta"><div class="num">03</div><div class="pages">教材 P16–22 · PDF 23–29</div></div>
+          <h4>智能创意绘画</h4>
+          <p class="desc">传统元素拆解、提示词调色板与 Canvas 模拟预览，完成「会飞的中国祝福」创作。</p>
+          <div class="tags"><span>风格元素</span><span>画布预览</span><span>版权说明</span></div>
+          <div class="go">进入实验室 →</div>
+        </a>
+        <a class="card u1" href="labs/单元1_第4节_智能创作音乐.html">
+          <div class="meta"><div class="num">04</div><div class="pages">教材 P23–28 · PDF 30–35</div></div>
+          <h4>智能创作音乐</h4>
+          <p class="desc">场景配乐、风格混合、波形与节拍可视化，完成试听评价与版权伦理检查。</p>
+          <div class="tags"><span>Web Audio</span><span>波形</span><span>风格比较</span></div>
+          <div class="go">进入实验室 →</div>
+        </a>
+        <a class="card u1" href="labs/单元1_第5节_智能创作视频.html">
+          <div class="meta"><div class="num">05</div><div class="pages">教材 P29–35 · PDF 36–42</div></div>
+          <h4>智能创作视频</h4>
+          <p class="desc">文生视频流程、分镜时间轴与文化宣传片工作台，检查事实、隐私与虚假画面风险。</p>
+          <div class="tags"><span>分镜</span><span>镜头参数</span><span>风险核验</span></div>
+          <div class="go">进入实验室 →</div>
+        </a>
+      </div>
+    </section>
+
+    <section class="section" id="unit2">
+      <div class="section-head">
+        <span class="badge u2">第二单元</span>
+        <h3>观察世界的智慧</h3>
+        <p>机器感知线：人脸应用 → 识别原理 → 文字 → 生物 → 垃圾分类 · 深海蓝 / 青绿 / 警示橙</p>
+      </div>
+      <div class="grid">
+        <a class="card u2" href="labs/单元2_第1节_智能识别人脸.html">
+          <div class="meta"><div class="num">01</div><div class="pages">教材 P36–41 · PDF 43–48</div></div>
+          <h4>智能识别人脸</h4>
+          <p class="desc">应用场景地图、角度光照遮挡实验、优缺点权衡与适用场景报告（仅虚拟头像）。</p>
+          <div class="tags"><span>条件实验</span><span>隐私权衡</span><span>报告</span></div>
+          <div class="go">进入实验室 →</div>
+        </a>
+        <a class="card u2" href="labs/单元2_第2节_人脸识别原理.html">
+          <div class="meta"><div class="num">02</div><div class="pages">教材 P42–49 · PDF 49–56</div></div>
+          <h4>人脸识别原理</h4>
+          <p class="desc">检测 · 特征提取 · 比较 · 阈值 · 训练模拟 · 隐私控制台——样板强交互实验课。</p>
+          <div class="tags"><span>特征匹配</span><span>阈值</span><span>隐私控制</span></div>
+          <div class="go">进入实验室 →</div>
+        </a>
+        <a class="card u2" href="labs/单元2_第3节_智能识别文字.html">
+          <div class="meta"><div class="num">03</div><div class="pages">教材 P50–55 · PDF 57–62</div></div>
+          <h4>智能识别文字</h4>
+          <p class="desc">OCR 流水线可视化、清晰度倾斜等条件调节、虚构车牌与手写体错误诊断修复。</p>
+          <div class="tags"><span>OCR</span><span>单步运行</span><span>错误修复</span></div>
+          <div class="go">进入实验室 →</div>
+        </a>
+        <a class="card u2" href="labs/单元2_第4节_智能识别生物.html">
+          <div class="meta"><div class="num">04</div><div class="pages">教材 P56–61 · PDF 63–68</div></div>
+          <h4>智能识别生物</h4>
+          <p class="desc">动植物特征观察、图像分类模拟与社区自然百科工坊，比较人类观察与 AI 识别。</p>
+          <div class="tags"><span>特征标注</span><span>分类</span><span>百科卡</span></div>
+          <div class="go">进入实验室 →</div>
+        </a>
+        <a class="card u2" href="labs/单元2_第5节_智能垃圾分类.html">
+          <div class="meta"><div class="num">05</div><div class="pages">教材 P62–68 · PDF 69–75</div></div>
+          <h4>智能垃圾分类</h4>
+          <p class="desc">分类训练场、人机协作比较、智能垃圾桶流程设计与测试记录导出。</p>
+          <div class="tags"><span>训练</span><span>人机协作</span><span>流程设计</span></div>
+          <div class="go">进入实验室 →</div>
+        </a>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <strong>课堂建议：</strong>浏览器直接打开 <code>index.html</code> 或各课时文件；推荐 Chrome / Edge / Safari。
+      大屏教学可点「课堂全屏」。每节支持保存、导出、导入与恢复示例。
+      项目贯通：第一单元完成「AI 传统文化创作展」，第二单元完成「校园智能识别体验中心」。
+      教材依据：山东教育出版社《人工智能通识·第一册》（PDF 页码 = 教材正文页码 + 7）。
+    </footer>
+  </div>
+  <script>
+    document.getElementById('btnFullscreen').addEventListener('click', () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    });
+  </script>
+</body>
+</html>

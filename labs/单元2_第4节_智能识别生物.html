@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>单元2·第4节 · 智能识别生物｜人工智能创作与机器感知互动实验室</title>
+<style>
+:root{
+  --ocean-deep:#071e32;--ocean:#0a2540;--ocean-mid:#0d3b66;--teal:#1a8a8a;--teal-bright:#2bb5b5;
+  --orange:#f0a020;--orange-warn:#e67e22;--panel:#0f2d4a;--panel2:#133556;--text:#e8f4f8;
+  --muted:#8ab4c8;--line:rgba(43,181,181,.35);--ok:#3dcc8c;--bad:#e85d5d;--radius:12px;
+  --font:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;font-family:var(--font);background:var(--ocean-deep);color:var(--text)}
+body{background:
+  radial-gradient(ellipse 80% 50% at 10% -10%,rgba(26,138,138,.3),transparent 55%),
+  radial-gradient(ellipse 50% 40% at 90% 0%,rgba(240,160,32,.1),transparent 50%),
+  linear-gradient(180deg,#061828 0%,var(--ocean-deep) 45%,#0a2a44 100%)}
+.topbar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;background:rgba(7,30,50,.92);border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--teal),var(--ocean-mid));display:grid;place-items:center}
+.brand h1{font-size:15px;font-weight:700}.brand p{font-size:11px;color:var(--muted)}
+.nav-btn{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:7px 11px;border-radius:8px;font:inherit;font-size:12px;cursor:pointer}
+.nav-btn:hover{border-color:var(--teal-bright)}
+.nav-btn.primary{background:linear-gradient(135deg,var(--teal),#147070);border-color:transparent}
+.nav-btn.warn{border-color:rgba(240,160,32,.5);color:var(--orange)}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 14px 48px}
+.hero{padding:18px 0 10px}
+.hero .tag{display:inline-block;font-size:11px;color:var(--orange);border:1px solid rgba(240,160,32,.45);padding:3px 10px;border-radius:999px;margin-bottom:8px}
+.hero h2{font-size:clamp(22px,3vw,30px);margin-bottom:6px}
+.hero p{color:var(--muted);font-size:14px;max-width:760px;line-height:1.6}
+.privacy{font-size:11px;color:var(--orange);margin-top:8px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 14px;padding:6px;background:rgba(15,45,74,.65);border:1px solid var(--line);border-radius:14px}
+.tab{flex:1;min-width:110px;padding:10px 8px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
+.tab.active{background:linear-gradient(135deg,rgba(26,138,138,.55),rgba(13,59,102,.8));color:#fff}
+.panel{display:none;animation:fade .25s ease}.panel.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.grid{display:grid;gap:14px}.grid-2{grid-template-columns:1fr 1fr}.grid-3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:860px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.card{background:linear-gradient(160deg,rgba(15,45,74,.95),rgba(10,37,64,.92));border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.card h3{font-size:16px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.card h3 .n{width:22px;height:22px;border-radius:6px;background:var(--orange);color:#1a1200;font-size:12px;display:grid;place-items:center;font-weight:800}
+.card .desc{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:12px}
+.btn{border:0;border-radius:8px;padding:9px 14px;font:inherit;font-size:13px;cursor:pointer;background:linear-gradient(135deg,var(--teal),#147070);color:#fff}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+.btn.orange{background:linear-gradient(135deg,var(--orange),var(--orange-warn));color:#1a1200;font-weight:700}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.feedback{margin-top:12px;padding:12px;border-radius:10px;background:rgba(26,138,138,.12);border:1px solid var(--line);font-size:13px;line-height:1.6;min-height:48px}
+.feedback.bad{background:rgba(232,93,93,.12);border-color:rgba(232,93,93,.35)}
+.feedback.ok{background:rgba(61,204,140,.12);border-color:rgba(61,204,140,.35)}
+.hint{font-size:12px;color:var(--orange);margin-top:8px}
+.bird-pick{display:flex;gap:8px;flex-wrap:wrap}
+.bird-pick button{flex:1;min-width:100px;padding:10px;border-radius:8px;border:1px solid var(--line);background:rgba(7,30,50,.5);color:var(--text);font:inherit;cursor:pointer}
+.bird-pick button.on{border-color:var(--teal-bright);background:rgba(26,138,138,.25)}
+.feat-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}
+.feat{padding:8px 10px;border-radius:8px;border:1px solid var(--line);font-size:12px;background:rgba(7,30,50,.4);cursor:pointer}
+.feat.on{border-color:var(--orange);background:rgba(240,160,32,.12)}
+.illu{display:flex;justify-content:center;align-items:center;min-height:220px;background:radial-gradient(circle at 50% 40%,rgba(43,181,181,.12),transparent 65%),rgba(7,30,50,.5);border-radius:10px;border:1px dashed var(--line)}
+.plant-list{display:grid;gap:8px;max-height:280px;overflow:auto}
+.plant{display:grid;grid-template-columns:auto 1fr;gap:10px;padding:10px;border:1px solid var(--line);border-radius:8px;cursor:pointer;background:rgba(7,30,50,.4)}
+.plant.on{border-color:var(--teal-bright)}
+.anno-tags{display:flex;flex-wrap:wrap;gap:6px}
+.anno-tags span{padding:6px 10px;border-radius:999px;border:1px solid var(--line);font-size:12px;cursor:pointer}
+.anno-tags span.on{background:rgba(240,160,32,.2);border-color:var(--orange);color:var(--orange)}
+.sliders{display:grid;gap:10px}
+.slider-row label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px}
+.slider-row input[type=range]{width:100%;accent-color:var(--teal-bright)}
+.compare-box{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:640px){.compare-box{grid-template-columns:1fr}}
+.metric{background:rgba(7,30,50,.55);border-radius:8px;padding:12px;border:1px solid var(--line);font-size:13px}
+.metric b{display:block;font-size:20px;color:var(--teal-bright);margin:4px 0}
+.wiki-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.wiki-card{border:1px solid var(--line);border-radius:10px;padding:12px;background:rgba(7,30,50,.45)}
+.wiki-card h4{font-size:14px;margin:6px 0;color:var(--teal-bright)}
+.wiki-card p{font-size:12px;color:var(--muted);line-height:1.5}
+.apps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+@media(max-width:720px){.apps{grid-template-columns:1fr}}
+.app{padding:10px;border-radius:8px;border:1px solid var(--line);font-size:12px;background:rgba(26,138,138,.1)}
+.report{white-space:pre-wrap;font-size:13px;line-height:1.65;background:rgba(7,30,50,.55);border-radius:10px;padding:14px;border:1px solid var(--line);max-height:320px;overflow:auto}
+input[type=text],textarea,select{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit}
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal-mask.show{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:560px;width:100%;padding:18px;max-height:85vh;overflow:auto}
+.modal h3{margin-bottom:8px}.modal li{font-size:13px;color:var(--muted);line-height:1.6;margin:4px 0}
+.modal ul{padding-left:18px;margin:8px 0}
+.toast{position:fixed;right:16px;bottom:16px;background:var(--panel2);border:1px solid var(--teal-bright);color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;z-index:120;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);text-align:center}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 16c2-6 5-9 8-9s6 3 8 9" stroke="#2bb5b5" stroke-width="1.5" stroke-linecap="round"/><circle cx="9" cy="10" r="1.4" fill="#e8f4f8"/><path d="M14 8c2 .5 3.5 2 4 4" stroke="#f0a020" stroke-width="1.4" stroke-linecap="round"/><path d="M6 18h12" stroke="#8ab4c8" stroke-width="1.3"/></svg>
+    </div>
+    <div>
+      <h1>智能识别生物 · 特征观察与分类工坊</h1>
+      <p>单元2 第4节 · P56-61 · 插画样本 · 离线仿真</p>
+    </div>
+  </div>
+  <button class="nav-btn primary" id="btnSave">保存</button>
+  <button class="nav-btn" id="btnExport">导出</button>
+  <button class="nav-btn" id="btnImport">导入</button>
+  <button class="nav-btn" id="btnFS">全屏</button>
+  <button class="nav-btn warn" id="btnReset">重置</button>
+  <button class="nav-btn" id="btnHelp">帮助</button>
+  <input type="file" id="importFile" accept="application/json,.json" hidden/>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <span class="tag">机器感知 · 动植物图像识别</span>
+    <h2>特征观察台 + 图像分类模拟器 + 社区自然百科</h2>
+    <p>对比相似鸟类的喙、羽色与体型；为校园虚拟植物标注叶/花/枝/果特征；调节角度、背景与遮挡观察识别变化；比较人眼观察与 AI 识别；制作百科卡片并导出。</p>
+    <p class="privacy">声明：全部为教学插画/合成图像，不上传实地隐私照片中的人物或可定位隐私信息。</p>
+  </section>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="m1">① 鸟类特征</button>
+    <button class="tab" data-tab="m2">② 校园植物</button>
+    <button class="tab" data-tab="m3">③ 条件影响</button>
+    <button class="tab" data-tab="m4">④ 人机比较</button>
+    <button class="tab" data-tab="m5">⑤ 百科工坊</button>
+  </nav>
+
+  <section class="panel active" id="m1">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="n">1</span>相似鸟类特征观察</h3>
+        <p class="desc">选择插画鸟类，点选可见特征，判断它更可能是哪一种，并对照关键差异。</p>
+        <div class="bird-pick" id="birdPick"></div>
+        <div class="feat-grid" id="featGrid"></div>
+        <div class="btn-row">
+          <button class="btn" id="btnGuessBird">提交特征判断</button>
+          <button class="btn ghost" id="btnRevealBird">显示差异要点</button>
+        </div>
+        <div class="feedback" id="birdFeedback">选择鸟类并勾选你观察到的特征。</div>
+        <p class="hint" id="birdHint"></p>
+      </div>
+      <div class="card">
+        <h3>插画观察区</h3>
+        <div class="illu" id="birdIllu"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="m2">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="n">2</span>虚拟校园植物标注</h3>
+        <p class="desc">从校园植物列表选择一种，为其标注叶、花、枝、果等可区分特征。</p>
+        <div class="plant-list" id="plantList"></div>
+      </div>
+      <div class="card">
+        <h3>特征标注板</h3>
+        <div class="illu" id="plantIllu" style="min-height:160px"></div>
+        <p style="font-size:12px;color:var(--muted);margin:10px 0 6px">点击标注（可多选）</p>
+        <div class="anno-tags" id="annoTags"></div>
+        <div class="btn-row">
+          <button class="btn" id="btnSaveAnno">保存标注</button>
+          <button class="btn ghost" id="btnCheckAnno">检验关键特征</button>
+        </div>
+        <div class="feedback" id="annoFeedback">选择植物后开始标注。</div>
+        <p class="hint" id="annoHint"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="m3">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="n">3</span>角度 / 背景 / 遮挡 → 识别结果</h3>
+        <p class="desc">调节拍摄条件，运行图像分类仿真，查看 Top 预测与置信度变化。</p>
+        <div class="sliders" id="bioSliders"></div>
+        <div class="btn-row">
+          <button class="btn" id="btnClassify">运行分类仿真</button>
+          <button class="btn ghost" id="btnIdeal">恢复理想条件</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>分类结果</h3>
+        <div class="illu" id="condIllu" style="min-height:180px"></div>
+        <div class="feedback" id="clsFeedback">调节滑块后运行分类。</div>
+        <p class="hint" id="clsHint">提示：正面中距、简洁背景、低遮挡时置信度更高。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="m4">
+    <div class="card">
+      <h3><span class="n">4</span>人眼观察 vs AI 图像识别</h3>
+      <p class="desc">先用人类观察写出判断，再查看 AI 仿真结果，分析异同。</p>
+      <div class="grid grid-2">
+        <div>
+          <div class="illu" id="cmpIllu" style="min-height:180px"></div>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-top:10px">你的观察结论（物种名）</label>
+          <input type="text" id="humanGuess" placeholder="例如：戴胜"/>
+          <label style="font-size:12px;color:var(--muted);display:block;margin-top:8px">你依据的特征</label>
+          <textarea id="humanReason" rows="3" placeholder="喙形、羽冠、体色…"></textarea>
+          <div class="btn-row">
+            <button class="btn" id="btnSubmitHuman">提交观察</button>
+            <button class="btn orange" id="btnRunAI">查看 AI 仿真</button>
+          </div>
+        </div>
+        <div>
+          <div class="compare-box">
+            <div class="metric"><span>人类判断</span><b id="mHuman">—</b><div id="mHumanR" style="font-size:12px;color:var(--muted)"></div></div>
+            <div class="metric"><span>AI 仿真</span><b id="mAI">—</b><div id="mAIR" style="font-size:12px;color:var(--muted)"></div></div>
+          </div>
+          <div class="feedback" id="cmpFeedback" style="margin-top:12px">先提交观察，再运行 AI。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="m5">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="n">5</span>社区自然百科工坊</h3>
+        <p class="desc">基于标注创建百科卡片，并了解交通鸟撞预警、垃圾分拣生物误检、生态监测等应用。</p>
+        <label style="font-size:12px;color:var(--muted)">卡片标题</label>
+        <input type="text" id="wikiTitle" placeholder="物种中文名" style="margin:6px 0"/>
+        <label style="font-size:12px;color:var(--muted)">特征摘要</label>
+        <textarea id="wikiBody" rows="3" placeholder="形态特征与辨析要点" style="margin:6px 0"></textarea>
+        <label style="font-size:12px;color:var(--muted)">类别</label>
+        <select id="wikiType" style="margin:6px 0"><option value="鸟类">鸟类</option><option value="植物">植物</option><option value="其他">其他</option></select>
+        <div class="btn-row">
+          <button class="btn" id="btnAddWiki">加入百科</button>
+          <button class="btn ghost" id="btnFillWiki">从当前标注填充</button>
+        </div>
+        <div class="apps">
+          <div class="app"><strong>交通</strong><br/>机场鸟情监测，降低鸟撞风险（仿真科普）。</div>
+          <div class="app"><strong>分拣</strong><br/>识别有机残渣中的非目标生物残留（需人工复核）。</div>
+          <div class="app"><strong>生态</strong><br/>样线调查辅助统计物种出现频次。</div>
+        </div>
+      </div>
+      <div class="card">
+        <h3>百科卡片墙</h3>
+        <div class="wiki-grid" id="wikiGrid"></div>
+        <div class="btn-row">
+          <button class="btn orange" id="btnExportWiki">导出百科与实验报告</button>
+        </div>
+        <div class="report" id="wikiReport" style="margin-top:10px;display:none"></div>
+      </div>
+    </div>
+  </section>
+  <footer>山东教育出版社《人工智能通识·第一册》· 单元2 第4节 · 离线互动实验</footer>
+</main>
+
+<div class="modal-mask" id="helpModal">
+  <div class="modal">
+    <h3>使用帮助</h3>
+    <ul>
+      <li>所有鸟类/植物均为 SVG/Canvas 教学插画，便于对比形态特征。</li>
+      <li>完成观察→标注→条件实验→人机比较→百科导出的完整任务环。</li>
+      <li>进度可保存至 localStorage，并导出/导入 JSON。</li>
+    </ul>
+    <div class="btn-row"><button class="btn" id="helpClose">知道了</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+const KEY='lab_u2_s4_bio_v1';
+const BIRDS=[
+  {id:'wood',name:'啄木鸟',color:'#d4553a',beak:'长直凿形喙',crest:'无显著羽冠',body:'攀禽体型，尾羽支撑',feats:['长直凿形喙','斑驳黑白羽','攀爬树干姿态','无扇形羽冠']},
+  {id:'hoopoe',name:'戴胜',color:'#d4a017',beak:'细长微弯喙',crest:'醒目扇形羽冠',body:'粉棕身，黑白翅纹',feats:['细长微弯喙','扇形羽冠','粉棕色身体','黑白相间翅纹']},
+  {id:'king',name:'普通翠鸟',color:'#2bb5b5',beak:'粗长直喙',crest:'无羽冠',body:'头大身小，蓝橙对照',feats:['粗长直喙','头大身短','蓝橙对照色','短尾']}
+];
+const ALL_FEATS=['长直凿形喙','细长微弯喙','粗长直喙','扇形羽冠','无显著羽冠','斑驳黑白羽','粉棕色身体','蓝橙对照色','攀爬树干姿态','黑白相间翅纹','头大身短','短尾'];
+const PLANTS=[
+  {id:'camphor',name:'香樟（虚拟校园）',key:['卵形叶','叶互生','核果','枝有樟脑香（描述）'],svg:'camphor'},
+  {id:'ginkgo',name:'银杏',key:['扇形叶','叶脉二叉','橙黄种子','枝较稀疏'],svg:'ginkgo'},
+  {id:'osmanthus',name:'桂花',key:['对生叶','叶缘有齿','簇生小花','常绿灌木/小乔'],svg:'osmanthus'},
+  {id:'sycamore',name:'悬铃木（法桐）',key:['掌状裂叶','球果串','斑驳树皮','阔叶乔木'],svg:'sycamore'}
+];
+const ANNO_OPTS=['卵形叶','扇形叶','掌状裂叶','叶互生','对生叶','叶缘有齿','叶脉二叉','簇生小花','核果','球果串','橙黄种子','斑驳树皮','枝较稀疏','常绿灌木/小乔','阔叶乔木','枝有樟脑香（描述）'];
+
+const state={
+  birdId:'hoopoe',selectedFeats:[],
+  plantId:'ginkgo',annos:{},
+  cond:{angle:10,bg:25,occlusion:10},
+  human:{guess:'',reason:''},ai:null,
+  wiki:[],
+  scores:{bird:0,anno:0}
+};
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1800);}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d)Object.assign(state,d);}catch(e){}}
+
+function birdSVG(b,opts={}){
+  const ang=opts.angle||0, occ=opts.occlusion||0, bg=opts.bg||20;
+  return `<svg width="260" height="200" viewBox="0 0 260 200">
+    <rect width="260" height="200" rx="12" fill="#0a2540"/>
+    <rect x="0" y="120" width="260" height="80" fill="#1a3a28" opacity="${0.3+bg/200}"/>
+    ${bg>40?`<circle cx="40" cy="40" r="18" fill="#2a4a3a"/><circle cx="70" cy="50" r="22" fill="#245038"/><circle cx="200" cy="35" r="20" fill="#2a4a3a"/>`:''}
+    <g transform="rotate(${ang*0.4} 130 100)">
+      <ellipse cx="130" cy="110" rx="48" ry="28" fill="${b.color}"/>
+      <circle cx="168" cy="95" r="22" fill="${b.color}"/>
+      <polygon points="${b.id==='hoopoe'?'155,70 170,40 185,72':'160,78 175,70 180,85'}" fill="${b.id==='hoopoe'?'#c4880a':b.color}"/>
+      <polygon points="188,95 230,100 188,108" fill="#f0d090"/>
+      <circle cx="175" cy="92" r="3" fill="#222"/>
+      <path d="M90 115 Q70 100 55 120" stroke="${b.color}" stroke-width="8" fill="none" stroke-linecap="round"/>
+      ${b.id==='wood'?`<rect x="40" y="40" width="14" height="120" rx="3" fill="#6b4423"/>`:''}
+      ${b.id==='king'?`<ellipse cx="130" cy="110" rx="40" ry="22" fill="#1a8a8a"/><ellipse cx="125" cy="118" rx="28" ry="14" fill="#e67e22"/>`:''}
+      ${occ>30?`<rect x="140" y="70" width="${40+occ*0.4}" height="${50+occ*0.2}" rx="6" fill="#1a3048" opacity=".8"/>`:''}
+    </g>
+    <text x="130" y="190" text-anchor="middle" fill="#8ab4c8" font-size="11">教学插画 · ${b.name}</text>
+  </svg>`;
+}
+function plantSVG(p){
+  const map={
+    ginkgo:`<path d="M130 150 L130 90"/><path d="M130 95 C90 95 70 60 130 40 C190 60 170 95 130 95" fill="#c6d96d" stroke="#7a9a30"/>`,
+    camphor:`<circle cx="130" cy="70" r="45" fill="#3d8f5a"/><rect x="124" y="100" width="12" height="55" fill="#6b4423"/><ellipse cx="110" cy="75" rx="18" ry="10" fill="#2f7a48"/>`,
+    osmanthus:`<rect x="124" y="90" width="12" height="60" fill="#5a3a22"/><circle cx="130" cy="75" r="40" fill="#2f7a48"/><circle cx="115" cy="70" r="4" fill="#f0a020"/><circle cx="140" cy="80" r="4" fill="#f0a020"/><circle cx="130" cy="60" r="4" fill="#f0a020"/>`,
+    sycamore:`<rect x="124" y="100" width="12" height="55" fill="#8a8a8a"/><path d="M130 100 L90 60 L110 70 L130 40 L150 70 L170 60 Z" fill="#5ea86a"/>`
+  };
+  return `<svg width="220" height="180" viewBox="0 0 260 200"><rect width="260" height="200" rx="12" fill="#0a2540"/>${map[p.svg]||map.ginkgo}<text x="130" y="190" text-anchor="middle" fill="#8ab4c8" font-size="11">${p.name}</text></svg>`;
+}
+
+function renderBirds(){
+  document.getElementById('birdPick').innerHTML=BIRDS.map(b=>`<button class="${state.birdId===b.id?'on':''}" data-id="${b.id}">${b.name}</button>`).join('');
+  document.getElementById('birdPick').querySelectorAll('button').forEach(btn=>{
+    btn.onclick=()=>{state.birdId=btn.dataset.id;state.selectedFeats=[];renderBirds();persist();};
+  });
+  document.getElementById('featGrid').innerHTML=ALL_FEATS.map(f=>`<div class="feat ${state.selectedFeats.includes(f)?'on':''}" data-f="${f}">${f}</div>`).join('');
+  document.getElementById('featGrid').querySelectorAll('.feat').forEach(el=>{
+    el.onclick=()=>{
+      const f=el.dataset.f;
+      if(state.selectedFeats.includes(f))state.selectedFeats=state.selectedFeats.filter(x=>x!==f);
+      else state.selectedFeats.push(f);
+      renderBirds();persist();
+    };
+  });
+  const b=BIRDS.find(x=>x.id===state.birdId);
+  document.getElementById('birdIllu').innerHTML=birdSVG(b);
+}
+function guessBird(){
+  const b=BIRDS.find(x=>x.id===state.birdId);
+  const hit=state.selectedFeats.filter(f=>b.feats.includes(f)).length;
+  const miss=state.selectedFeats.filter(f=>!b.feats.includes(f)).length;
+  const fb=document.getElementById('birdFeedback');
+  if(state.selectedFeats.length<2){
+    fb.className='feedback bad';fb.textContent='请至少选择 2 个特征再判断。';
+    document.getElementById('birdHint').textContent='提示：先看喙形与头部装饰（羽冠）。';
+    return;
+  }
+  if(hit>=2 && miss<=1){
+    state.scores.bird++;
+    fb.className='feedback ok';
+    fb.textContent=`特征匹配良好：与「${b.name}」相符（命中${hit}，误选${miss}）。喙：${b.beak}；${b.crest}；${b.body}`;
+    document.getElementById('birdHint').textContent='';
+  }else{
+    fb.className='feedback bad';
+    fb.textContent=`匹配不足（命中${hit}，误选${miss}）。请对比插画重试。`;
+    document.getElementById('birdHint').textContent='提示：啄木鸟重“凿形喙+攀爬”；戴胜重“羽冠+弯喙”；翠鸟重“头大+蓝橙”。';
+  }
+  persist();
+}
+
+function renderPlants(){
+  document.getElementById('plantList').innerHTML=PLANTS.map(p=>`<div class="plant ${state.plantId===p.id?'on':''}" data-id="${p.id}">
+    <div>${plantSVG(p).replace('width="220"','width="64"').replace('height="180"','height="52"')}</div>
+    <div><strong>${p.name}</strong><div style="font-size:12px;color:var(--muted);margin-top:4px">点击选择并标注</div></div>
+  </div>`).join('');
+  document.getElementById('plantList').querySelectorAll('.plant').forEach(el=>{
+    el.onclick=()=>{state.plantId=el.dataset.id;renderPlants();renderAnnos();persist();};
+  });
+  const p=PLANTS.find(x=>x.id===state.plantId);
+  document.getElementById('plantIllu').innerHTML=plantSVG(p);
+}
+function renderAnnos(){
+  const cur=state.annos[state.plantId]||[];
+  document.getElementById('annoTags').innerHTML=ANNO_OPTS.map(a=>`<span class="${cur.includes(a)?'on':''}" data-a="${a}">${a}</span>`).join('');
+  document.getElementById('annoTags').querySelectorAll('span').forEach(sp=>{
+    sp.onclick=()=>{
+      let arr=state.annos[state.plantId]?state.annos[state.plantId].slice():[];
+      if(arr.includes(sp.dataset.a))arr=arr.filter(x=>x!==sp.dataset.a);else arr.push(sp.dataset.a);
+      state.annos[state.plantId]=arr;renderAnnos();persist();
+    };
+  });
+}
+function checkAnno(){
+  const p=PLANTS.find(x=>x.id===state.plantId);
+  const cur=state.annos[state.plantId]||[];
+  const hit=p.key.filter(k=>cur.includes(k)).length;
+  const fb=document.getElementById('annoFeedback');
+  if(hit>=Math.min(3,p.key.length)){
+    state.scores.anno++;
+    fb.className='feedback ok';fb.textContent=`标注有效：覆盖关键特征 ${hit}/${p.key.length}。`;
+    document.getElementById('annoHint').textContent='';
+  }else{
+    fb.className='feedback bad';fb.textContent=`关键特征覆盖不足（${hit}/${p.key.length}）。`;
+    document.getElementById('annoHint').textContent='提示关键：'+p.key.join('、');
+  }
+  persist();
+}
+
+function renderBioSliders(){
+  const conf=[['angle','拍摄角度',0,80],['bg','背景复杂度',0,100],['occlusion','遮挡程度',0,100]];
+  const box=document.getElementById('bioSliders');
+  box.innerHTML=conf.map(([k,l,a,b])=>`<div class="slider-row"><label><span>${l}</span><span id="bv_${k}">${state.cond[k]}</span></label>
+    <input type="range" min="${a}" max="${b}" value="${state.cond[k]}" data-k="${k}"/></div>`).join('');
+  box.querySelectorAll('input').forEach(inp=>{
+    inp.oninput=()=>{state.cond[inp.dataset.k]=+inp.value;document.getElementById('bv_'+inp.dataset.k).textContent=inp.value;drawCond();persist();};
+  });
+  drawCond();
+}
+function drawCond(){
+  const b=BIRDS.find(x=>x.id===state.birdId);
+  document.getElementById('condIllu').innerHTML=birdSVG(b,state.cond);
+  document.getElementById('cmpIllu').innerHTML=birdSVG(b,{angle:15,bg:30,occlusion:5});
+}
+function runClassify(){
+  const b=BIRDS.find(x=>x.id===state.birdId);
+  const {angle,bg,occlusion}=state.cond;
+  let conf=0.93;
+  conf-=angle/80*0.4;conf-=bg/100*0.25;conf-=occlusion/100*0.45;
+  conf=Math.max(0.15,Math.min(0.98,conf));
+  const others=BIRDS.filter(x=>x.id!==b.id);
+  let top=[{name:b.name,p:conf}];
+  let rest=1-conf;
+  others.forEach((o,i)=>{const p=rest*(i===0?0.65:0.35)*(0.8+Math.random()*0.2);top.push({name:o.name,p});});
+  if(conf<0.45){
+    // confuse with similar
+    top.sort((a,c)=>c.p-a.p);
+    if(Math.random()>0.4){const t=top[0];top[0]=top[1];top[1]=t;}
+  }else top.sort((a,c)=>c.p-a.p);
+  const fb=document.getElementById('clsFeedback');
+  fb.className='feedback '+(top[0].name===b.name?'ok':'bad');
+  fb.textContent='Top 预测：'+top.map(t=>`${t.name} ${Math.round(t.p*100)}%`).join(' · ')+`（真实标签：${b.name}）`;
+  document.getElementById('clsHint').textContent=top[0].name===b.name?'识别正确。可加大遮挡挑战模型。':'出现混淆。请降低角度/遮挡后重试。';
+  persist();
+}
+
+function submitHuman(){
+  state.human.guess=document.getElementById('humanGuess').value.trim();
+  state.human.reason=document.getElementById('humanReason').value.trim();
+  if(!state.human.guess){toast('请填写观察结论');return;}
+  document.getElementById('mHuman').textContent=state.human.guess;
+  document.getElementById('mHumanR').textContent=state.human.reason||'（未填写依据）';
+  document.getElementById('cmpFeedback').textContent='人类观察已记录，可查看 AI 仿真。';
+  persist();
+}
+function runAI(){
+  const b=BIRDS.find(x=>x.id===state.birdId);
+  const conf=Math.round(80+Math.random()*15);
+  state.ai={name:b.name,conf,note:'依据喙形、羽色分布与头部轮廓的深度特征（仿真）'};
+  document.getElementById('mAI').textContent=`${state.ai.name} ${conf}%`;
+  document.getElementById('mAIR').textContent=state.ai.note;
+  const same=state.human.guess && state.human.guess.includes(b.name.replace('普通',''));
+  const fb=document.getElementById('cmpFeedback');
+  fb.className='feedback ok';
+  fb.textContent=same
+    ?`人机一致倾向「${b.name}」。人类强在语义解释与语境，AI 强在快速多特征比对，但在遮挡/稀有种上仍需人工复核。`
+    :`人机可能不一致。人类：${state.human.guess||'未填'}；AI：${b.name}。差异可能来自关注特征不同或命名别名。教学中应保留人工确认环节。`;
+  persist();
+}
+
+function renderWiki(){
+  const box=document.getElementById('wikiGrid');
+  if(!state.wiki.length){box.innerHTML='<p style="font-size:13px;color:var(--muted)">尚未创建卡片</p>';return;}
+  box.innerHTML=state.wiki.map((w,i)=>`<div class="wiki-card"><div style="font-size:11px;color:var(--orange)">${w.type}</div><h4>${w.title}</h4><p>${w.body}</p>
+    <button class="btn ghost" style="margin-top:8px;padding:4px 8px;font-size:11px" data-del="${i}">删除</button></div>`).join('');
+  box.querySelectorAll('[data-del]').forEach(btn=>btn.onclick=()=>{state.wiki.splice(+btn.dataset.del,1);renderWiki();persist();});
+}
+function addWiki(){
+  const title=document.getElementById('wikiTitle').value.trim();
+  const body=document.getElementById('wikiBody').value.trim();
+  const type=document.getElementById('wikiType').value;
+  if(!title||!body){toast('请填写标题与摘要');return;}
+  state.wiki.push({title,body,type});
+  document.getElementById('wikiTitle').value='';
+  document.getElementById('wikiBody').value='';
+  renderWiki();persist();toast('卡片已添加');
+}
+function fillWiki(){
+  if(document.getElementById('wikiType').value==='植物'||state.plantId){
+    const p=PLANTS.find(x=>x.id===state.plantId);
+    const cur=state.annos[state.plantId]||[];
+    document.getElementById('wikiTitle').value=p.name;
+    document.getElementById('wikiBody').value='标注特征：'+(cur.join('、')||p.key.join('、'));
+    document.getElementById('wikiType').value='植物';
+  }
+  const b=BIRDS.find(x=>x.id===state.birdId);
+  if(document.getElementById('wikiType').value==='鸟类'){
+    document.getElementById('wikiTitle').value=b.name;
+    document.getElementById('wikiBody').value=`${b.beak}；${b.crest}；${b.body}`;
+  }
+}
+function exportWiki(){
+  const lines=[
+    '《社区自然百科与生物识别实验报告》',
+    '教材：山东教育出版社《人工智能通识·第一册》单元2第4节',
+    '',
+    '一、百科卡片',
+    ...(state.wiki.length?state.wiki.map((w,i)=>`${i+1}. 【${w.type}】${w.title}\n   ${w.body}`):['（暂无）']),
+    '',
+    '二、实验得分摘要',
+    `· 鸟类特征判断成功累计：${state.scores.bird}`,
+    `· 植物标注检验成功累计：${state.scores.anno}`,
+    '',
+    '三、人机比较',
+    state.human.guess?`· 人类：${state.human.guess}｜${state.human.reason}`:'· 人类：未提交',
+    state.ai?`· AI：${state.ai.name} ${state.ai.conf}%`:'· AI：未运行',
+    '',
+    '四、应用启示',
+    '· 交通：鸟情识别辅助机场安全；',
+    '· 分拣：视觉模型辅助有机物分选但仍需复核；',
+    '· 生态：长期监测需注意样本偏差与稀有种漏检。',
+    '',
+    `生成时间：${new Date().toLocaleString('zh-CN')}`
+  ];
+  const text=lines.join('\n');
+  document.getElementById('wikiReport').style.display='block';
+  document.getElementById('wikiReport').textContent=text;
+  const blob=new Blob([text],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='生物识别_百科与实验报告.txt';a.click();URL.revokeObjectURL(a.href);
+  const j=new Blob([JSON.stringify({meta:{lab:KEY},state},null,2)],{type:'application/json'});
+  const a2=document.createElement('a');a2.href=URL.createObjectURL(j);a2.download='单元2_第4节_智能识别生物_进度.json';a2.click();URL.revokeObjectURL(a2.href);
+  toast('已导出报告与进度');
+}
+
+function bind(){
+  document.querySelectorAll('.tab').forEach(tab=>{
+    tab.onclick=()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      tab.classList.add('active');document.getElementById(tab.dataset.tab).classList.add('active');
+    };
+  });
+  document.getElementById('btnSave').onclick=()=>{persist();toast('已保存');};
+  document.getElementById('btnExport').onclick=()=>{
+    const blob=new Blob([JSON.stringify({meta:{lab:KEY},state},null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='单元2_第4节_智能识别生物_进度.json';a.click();URL.revokeObjectURL(a.href);
+  };
+  document.getElementById('btnImport').onclick=()=>document.getElementById('importFile').click();
+  document.getElementById('importFile').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;const r=new FileReader();
+    r.onload=()=>{try{const d=JSON.parse(r.result);Object.assign(state,d.state||d);persist();location.reload();}catch(err){toast('导入失败');}};
+    r.readAsText(f);
+  };
+  document.getElementById('btnFS').onclick=()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>toast('全屏不可用'));else document.exitFullscreen();};
+  document.getElementById('btnReset').onclick=()=>{if(confirm('重置全部进度？')){localStorage.removeItem(KEY);location.reload();}};
+  document.getElementById('btnHelp').onclick=()=>document.getElementById('helpModal').classList.add('show');
+  document.getElementById('helpClose').onclick=()=>document.getElementById('helpModal').classList.remove('show');
+  document.getElementById('btnGuessBird').onclick=guessBird;
+  document.getElementById('btnRevealBird').onclick=()=>{
+    const b=BIRDS.find(x=>x.id===state.birdId);
+    document.getElementById('birdHint').textContent=`差异要点：${b.feats.join('；')}`;
+  };
+  document.getElementById('btnSaveAnno').onclick=()=>{persist();toast('标注已保存');document.getElementById('annoFeedback').textContent='标注已写入本地。可点击检验。';};
+  document.getElementById('btnCheckAnno').onclick=checkAnno;
+  document.getElementById('btnClassify').onclick=runClassify;
+  document.getElementById('btnIdeal').onclick=()=>{state.cond={angle:5,bg:15,occlusion:5};renderBioSliders();persist();};
+  document.getElementById('btnSubmitHuman').onclick=submitHuman;
+  document.getElementById('btnRunAI').onclick=runAI;
+  document.getElementById('btnAddWiki').onclick=addWiki;
+  document.getElementById('btnFillWiki').onclick=fillWiki;
+  document.getElementById('btnExportWiki').onclick=exportWiki;
+}
+
+load();
+bind();
+renderBirds();
+renderPlants();
+renderAnnos();
+renderBioSliders();
+renderWiki();
+if(state.human.guess){document.getElementById('humanGuess').value=state.human.guess;document.getElementById('humanReason').value=state.human.reason||'';document.getElementById('mHuman').textContent=state.human.guess;}
+if(state.ai){document.getElementById('mAI').textContent=`${state.ai.name} ${state.ai.conf}%`;document.getElementById('mAIR').textContent=state.ai.note;}
+})();
+</script>
+</body>
+</html>

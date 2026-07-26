@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>单元2·第1节 · 智能识别人脸｜人工智能创作与机器感知互动实验室</title>
+<style>
+:root{
+  --ocean-deep:#071e32;--ocean:#0a2540;--ocean-mid:#0d3b66;--teal:#1a8a8a;--teal-bright:#2bb5b5;
+  --orange:#f0a020;--orange-warn:#e67e22;--panel:#0f2d4a;--panel2:#133556;--text:#e8f4f8;
+  --muted:#8ab4c8;--line:rgba(43,181,181,.35);--ok:#3dcc8c;--bad:#e85d5d;--radius:12px;
+  --font:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;font-family:var(--font);background:var(--ocean-deep);color:var(--text)}
+body{background:
+  radial-gradient(ellipse 80% 50% at 10% -10%,rgba(26,138,138,.28),transparent 55%),
+  radial-gradient(ellipse 60% 40% at 90% 0%,rgba(240,160,32,.12),transparent 50%),
+  linear-gradient(180deg,#061828 0%,var(--ocean-deep) 40%,#0a2a44 100%)}
+a{color:var(--teal-bright)}
+.topbar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;align-items:center;gap:8px;
+  padding:10px 14px;background:rgba(7,30,50,.92);border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--teal),var(--ocean-mid));
+  display:grid;place-items:center;box-shadow:0 0 0 2px rgba(43,181,181,.3)}
+.brand h1{font-size:15px;font-weight:700;letter-spacing:.02em}
+.brand p{font-size:11px;color:var(--muted)}
+.nav-btn{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:7px 11px;border-radius:8px;
+  font:inherit;font-size:12px;cursor:pointer;transition:.15s}
+.nav-btn:hover{border-color:var(--teal-bright);color:#fff}
+.nav-btn.primary{background:linear-gradient(135deg,var(--teal),#147070);border-color:transparent}
+.nav-btn.warn{border-color:rgba(240,160,32,.5);color:var(--orange)}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 14px 48px}
+.hero{padding:18px 0 10px}
+.hero .tag{display:inline-block;font-size:11px;color:var(--orange);border:1px solid rgba(240,160,32,.45);
+  padding:3px 10px;border-radius:999px;margin-bottom:8px}
+.hero h2{font-size:clamp(22px,3vw,30px);margin-bottom:6px}
+.hero p{color:var(--muted);font-size:14px;max-width:720px;line-height:1.6}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 14px;padding:6px;background:rgba(15,45,74,.65);
+  border:1px solid var(--line);border-radius:14px}
+.tab{flex:1;min-width:120px;padding:10px 8px;border:0;border-radius:10px;background:transparent;color:var(--muted);
+  font:inherit;font-size:13px;cursor:pointer}
+.tab.active{background:linear-gradient(135deg,rgba(26,138,138,.55),rgba(13,59,102,.8));color:#fff;box-shadow:inset 0 0 0 1px var(--line)}
+.panel{display:none;animation:fade .25s ease}
+.panel.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.grid{display:grid;gap:14px}
+.grid-2{grid-template-columns:1.1fr .9fr}
+.grid-3{grid-template-columns:repeat(3,1fr)}
+@media(max-width:860px){.grid-2,.grid-3{grid-template-columns:1fr}}
+.card{background:linear-gradient(160deg,rgba(15,45,74,.95),rgba(10,37,64,.92));border:1px solid var(--line);
+  border-radius:var(--radius);padding:16px}
+.card h3{font-size:16px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.card h3 .n{width:22px;height:22px;border-radius:6px;background:var(--orange);color:#1a1200;
+  font-size:12px;display:grid;place-items:center;font-weight:800}
+.card .desc{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:12px}
+.scene-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media(max-width:640px){.scene-grid{grid-template-columns:1fr}}
+.scene{border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer;background:rgba(7,30,50,.45);transition:.15s}
+.scene:hover,.scene.on{border-color:var(--teal-bright);background:rgba(26,138,138,.18)}
+.scene .title{font-weight:700;font-size:14px;margin:6px 0 4px}
+.scene .meta{font-size:12px;color:var(--muted);line-height:1.45}
+.avatar-stage{display:flex;flex-direction:column;align-items:center;gap:10px;min-height:220px;justify-content:center;
+  background:radial-gradient(circle at 50% 40%,rgba(43,181,181,.15),transparent 60%),rgba(7,30,50,.5);
+  border-radius:10px;border:1px dashed var(--line);padding:12px}
+.sliders{display:grid;gap:10px}
+.slider-row label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px}
+.slider-row input[type=range]{width:100%;accent-color:var(--teal-bright)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.stat{background:rgba(7,30,50,.55);border-radius:8px;padding:10px;text-align:center;border:1px solid transparent}
+.stat b{display:block;font-size:20px;color:var(--teal-bright)}
+.stat.fail b{color:var(--bad)}
+.stat span{font-size:11px;color:var(--muted)}
+.btn{border:0;border-radius:8px;padding:9px 14px;font:inherit;font-size:13px;cursor:pointer;
+  background:linear-gradient(135deg,var(--teal),#147070);color:#fff}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+.btn.orange{background:linear-gradient(135deg,var(--orange),var(--orange-warn));color:#1a1200;font-weight:700}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.feedback{margin-top:12px;padding:12px;border-radius:10px;background:rgba(26,138,138,.12);border:1px solid var(--line);
+  font-size:13px;line-height:1.6;min-height:48px}
+.feedback.bad{background:rgba(232,93,93,.12);border-color:rgba(232,93,93,.35)}
+.feedback.ok{background:rgba(61,204,140,.12);border-color:rgba(61,204,140,.35)}
+.hint{font-size:12px;color:var(--orange);margin-top:8px}
+.trade{display:grid;gap:8px}
+.trade-item{display:grid;grid-template-columns:90px 1fr 40px;gap:8px;align-items:center;font-size:12px}
+.bar{height:10px;background:rgba(7,30,50,.7);border-radius:999px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--orange));border-radius:999px}
+.timeline{display:flex;flex-direction:column;gap:8px;min-height:220px}
+.chip{padding:10px 12px;background:var(--panel2);border:1px solid var(--line);border-radius:8px;cursor:grab;
+  font-size:13px;user-select:none;display:flex;align-items:center;gap:8px}
+.chip .ord{width:22px;height:22px;border-radius:50%;background:rgba(240,160,32,.2);color:var(--orange);
+  display:grid;place-items:center;font-size:11px;font-weight:700}
+.chip.dragging{opacity:.5}
+.dropzone{border:2px dashed rgba(43,181,181,.4);border-radius:10px;padding:10px;min-height:240px;
+  background:rgba(7,30,50,.35)}
+.report{white-space:pre-wrap;font-size:13px;line-height:1.65;background:rgba(7,30,50,.55);border-radius:10px;
+  padding:14px;border:1px solid var(--line);max-height:360px;overflow:auto}
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal-mask.show{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:560px;width:100%;padding:18px;max-height:85vh;overflow:auto}
+.modal h3{margin-bottom:8px}
+.modal p,.modal li{font-size:13px;color:var(--muted);line-height:1.6}
+.modal ul{padding-left:18px;margin:8px 0}
+.toast{position:fixed;right:16px;bottom:16px;background:var(--panel2);border:1px solid var(--teal-bright);
+  color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;z-index:120;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+.reason-list{font-size:12px;color:var(--muted);margin-top:8px;max-height:100px;overflow:auto}
+.reason-list li{margin:3px 0}
+footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);text-align:center}
+.privacy{font-size:11px;color:var(--orange);margin-top:8px}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="10" r="3.2" stroke="#e8f4f8" stroke-width="1.6"/><path d="M5 19c1.5-3.2 4-4.8 7-4.8s5.5 1.6 7 4.8" stroke="#e8f4f8" stroke-width="1.6" stroke-linecap="round"/><rect x="3.5" y="3.5" width="17" height="17" rx="4" stroke="#2bb5b5" stroke-width="1.4"/></svg>
+    </div>
+    <div>
+      <h1>智能识别人脸 · 应用与条件实验室</h1>
+      <p>单元2 第1节 · P36-41 · 虚拟数据 · 离线仿真</p>
+    </div>
+  </div>
+  <button class="nav-btn primary" id="btnSave">保存</button>
+  <button class="nav-btn" id="btnExport">导出</button>
+  <button class="nav-btn" id="btnImport">导入</button>
+  <button class="nav-btn" id="btnFS">全屏</button>
+  <button class="nav-btn warn" id="btnReset">重置</button>
+  <button class="nav-btn" id="btnHelp">帮助</button>
+  <input type="file" id="importFile" accept="application/json,.json" hidden/>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <span class="tag">机器感知 · 人脸识别应用地图</span>
+    <h2>人工智能创作与机器感知互动实验室</h2>
+    <p>用卡通虚拟头像探索门禁、支付、银行核验与设备解锁等场景；调节角度、距离、光照、遮挡与表情，观察识别成功率变化，并完成优缺点权衡与发展历程排序。全程仅使用合成数据，不采集真实人脸。</p>
+    <p class="privacy">隐私声明：本实验仅使用 Canvas/SVG 卡通虚拟头像与合成统计，禁止上传真实人脸或隐私数据。</p>
+  </section>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="m1">① 应用地图</button>
+    <button class="tab" data-tab="m2">② 条件影响</button>
+    <button class="tab" data-tab="m3">③ 优缺点分析</button>
+    <button class="tab" data-tab="m4">④ 发展历程</button>
+    <button class="tab" data-tab="m5">⑤ 场景报告</button>
+  </nav>
+
+  <!-- Module 1 -->
+  <section class="panel active" id="m1">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="n">1</span>虚拟头像应用场景</h3>
+        <p class="desc">点击场景卡片，查看卡通虚拟用户如何完成识别流程。所有头像均为合成插画，非真实人脸。</p>
+        <div class="scene-grid" id="sceneGrid"></div>
+      </div>
+      <div class="card">
+        <h3>场景演示台</h3>
+        <div class="avatar-stage" id="sceneStage">
+          <svg id="avatarSvg" width="160" height="160" viewBox="0 0 160 160"></svg>
+          <div id="sceneDetail" class="meta" style="text-align:center;font-size:13px;color:var(--muted);max-width:280px"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="btnSimulateScene">模拟一次识别</button>
+          <button class="btn ghost" id="btnNextAvatar">切换虚拟头像</button>
+        </div>
+        <div class="feedback" id="sceneFeedback">请选择左侧应用场景开始探索。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Module 2 -->
+  <section class="panel" id="m2">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="n">2</span>条件影响实验</h3>
+        <p class="desc">调节识别条件，点击“发起识别”，观察成功率与失败原因（规则仿真）。</p>
+        <div class="avatar-stage" style="min-height:180px">
+          <canvas id="condCanvas" width="200" height="200" style="max-width:100%"></canvas>
+        </div>
+        <div class="sliders" id="condSliders"></div>
+        <div class="btn-row">
+          <button class="btn" id="btnRunCond">发起识别</button>
+          <button class="btn ghost" id="btnBatchCond">连续试验×10</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>成功率与原因统计</h3>
+        <div class="stats">
+          <div class="stat"><b id="stSuccess">0</b><span>成功次数</span></div>
+          <div class="stat fail"><b id="stFail">0</b><span>失败次数</span></div>
+          <div class="stat"><b id="stRate">—</b><span>成功率</span></div>
+        </div>
+        <div class="feedback" id="condFeedback">调节滑块后发起识别，系统将给出规则化判定与解释。</div>
+        <ul class="reason-list" id="reasonList"></ul>
+        <p class="hint" id="condHint">提示：正面、中等距离、均匀光照、无遮挡、自然表情时成功率最高。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Module 3 -->
+  <section class="panel" id="m3">
+    <div class="card">
+      <h3><span class="n">3</span>优缺点分析台</h3>
+      <p class="desc">为四个维度打分（1–10），比较不同场景的便利性、准确性、误识风险与隐私代价，并写下你的权衡结论。</p>
+      <div class="grid grid-2" style="margin-top:8px">
+        <div>
+          <label style="font-size:12px;color:var(--muted)">分析场景</label>
+          <select id="tradeScene" style="width:100%;margin:6px 0 12px;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit"></select>
+          <div class="trade" id="tradeSliders"></div>
+          <div class="btn-row">
+            <button class="btn" id="btnSaveTrade">记录本场景评分</button>
+            <button class="btn ghost" id="btnCompareTrade">生成对比结论</button>
+          </div>
+        </div>
+        <div>
+          <div class="feedback" id="tradeFeedback">请为各维度打分并记录。</div>
+          <div class="report" id="tradeReport" style="margin-top:10px;min-height:160px">对比结论将显示在这里。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Module 4 -->
+  <section class="panel" id="m4">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="n">4</span>发展历程排序</h3>
+        <p class="desc">将下列阶段拖到右侧时间线，按从早到晚排列，再提交检验。</p>
+        <div class="timeline" id="stagePool"></div>
+      </div>
+      <div class="card">
+        <h3>时间线（早 → 晚）</h3>
+        <div class="dropzone" id="stageDrop"></div>
+        <div class="btn-row">
+          <button class="btn" id="btnCheckStages">检验排序</button>
+          <button class="btn ghost" id="btnShuffleStages">打乱重排</button>
+        </div>
+        <div class="feedback" id="stageFeedback">请把左侧阶段拖入时间线。</div>
+        <p class="hint" id="stageHint"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Module 5 -->
+  <section class="panel" id="m5">
+    <div class="card">
+      <h3><span class="n">5</span>适用场景与限制报告</h3>
+      <p class="desc">综合前序实验，生成可导出的学习报告（含适用场景、条件限制、隐私提醒）。</p>
+      <div class="btn-row">
+        <button class="btn orange" id="btnGenReport">生成报告</button>
+        <button class="btn" id="btnExportReport">导出报告文本</button>
+        <button class="btn ghost" id="btnCopyReport">复制到剪贴板</button>
+      </div>
+      <div class="report" id="finalReport" style="margin-top:12px">点击“生成报告”汇总你的实验数据。</div>
+    </div>
+  </section>
+
+  <footer>山东教育出版社《人工智能通识·第一册》· 单元2 第1节 · 离线互动实验 · 仅供教学仿真</footer>
+</main>
+
+<div class="modal-mask" id="helpModal">
+  <div class="modal">
+    <h3>使用帮助</h3>
+    <ul>
+      <li>任务循环：阅读任务 → 操作模块 → 查看反馈 → 按提示重试 → 导出成果。</li>
+      <li>保存：写入本机 localStorage；导出/导入：JSON 文件互换进度。</li>
+      <li>本实验全部为虚拟卡通头像与规则仿真，不连接网络，不使用真实人脸。</li>
+      <li>建议依次完成五个模块，最后生成“适用场景与限制”报告。</li>
+    </ul>
+    <div class="btn-row"><button class="btn" id="helpClose">知道了</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+const KEY='lab_u2_s1_face_app_v1';
+const state={
+  sceneId:'gate', avatarIdx:0,
+  cond:{angle:0,distance:50,light:70,occlusion:0,expression:20},
+  trials:{success:0,fail:0,reasons:[]},
+  tradeScores:{},
+  stageOrder:[],
+  report:''
+};
+
+const SCENES=[
+  {id:'gate',name:'校园/小区门禁',icon:'🚪',need:'中等准确·可接受短暂延迟',flow:'靠近闸机→虚拟头像检测→比对通行库→开闸/提示重试',risk:'逆光、低头、口罩遮挡易失败',ok:'高峰通行便利'},
+  {id:'pay',name:'刷脸支付（模拟）',icon:'💳',need:'高准确·低误识',flow:'确认金额→活体眨眼（卡通）→比对账户模板→支付结果',risk:'相似脸误识、强光反光',ok:'免掏手机，效率高'},
+  {id:'bank',name:'银行远程核验（模拟）',icon:'🏦',need:'很高准确·强风控',flow:'证件信息（虚构）→多角度卡通采集→人工复核接口（仿真）',risk:'隐私敏感、仿冒攻击需防护',ok:'减少网点排队'},
+  {id:'unlock',name:'手机/设备解锁',icon:'📱',need:'快响应·本地比对',flow:'抬起设备→近距离检测→本地模板匹配→解锁',risk:'黑暗、湿脸、角度过大',ok:'比密码更便捷'}
+];
+
+const AVATARS=[
+  {skin:'#f0c9a0',hair:'#2c1810',shirt:'#1a8a8a'},
+  {skin:'#e8b896',hair:'#4a3728',shirt:'#0d3b66'},
+  {skin:'#f5d0b0',hair:'#1a1a1a',shirt:'#e67e22'},
+  {skin:'#efc4a8',hair:'#6b4423',shirt:'#2bb5b5'}
+];
+
+const STAGES=[
+  {id:'s1',text:'早期：几何特征与手工规则，对环境敏感'},
+  {id:'s2',text:'经典：特征工程 + 机器学习分类器'},
+  {id:'s3',text:'深度：卷积神经网络端到端学习面部表征'},
+  {id:'s4',text:'应用：门禁/支付/解锁规模化落地，强调隐私与安全'}
+];
+const STAGE_ANSWER=['s1','s2','s3','s4'];
+
+const TRADE_DIMS=[
+  {k:'conv',label:'便利性'},
+  {k:'acc',label:'准确性'},
+  {k:'mis',label:'误识风险',invert:true},
+  {k:'priv',label:'隐私代价',invert:true}
+];
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1800);
+}
+
+function drawAvatarSVG(el,av,opts={}){
+  const angle=opts.angle||0, occ=opts.occlusion||0, expr=opts.expression||0, light=opts.light??70;
+  const shade=Math.max(0.35,light/100);
+  el.innerHTML=`
+  <defs><radialGradient id="g" cx="50%" cy="40%"><stop offset="0%" stop-color="#2bb5b5" stop-opacity=".25"/><stop offset="100%" stop-color="#071e32" stop-opacity="0"/></radialGradient></defs>
+  <rect width="160" height="160" rx="16" fill="#0a2540"/>
+  <circle cx="80" cy="80" r="70" fill="url(#g)"/>
+  <g transform="rotate(${angle*0.35} 80 78)">
+    <ellipse cx="80" cy="58" rx="42" ry="28" fill="${av.hair}"/>
+    <circle cx="80" cy="78" r="36" fill="${av.skin}" opacity="${shade}"/>
+    <circle cx="66" cy="74" r="4" fill="#222"/><circle cx="94" cy="74" r="4" fill="#222"/>
+    <path d="M68 ${88+expr*0.08} Q80 ${92+expr*0.12} 92 ${88+expr*0.08}" stroke="#8a4a2a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+    <rect x="52" y="108" width="56" height="36" rx="10" fill="${av.shirt}" opacity="${shade}"/>
+    ${occ>30?`<rect x="48" y="62" width="64" height="${12+occ*0.25}" rx="4" fill="#333" opacity=".85"/>`:''}
+    ${occ>60?`<rect x="70" y="40" width="50" height="70" rx="6" fill="#1a3048" opacity=".75" transform="rotate(18 95 75)"/>`:''}
+  </g>
+  <text x="80" y="152" text-anchor="middle" fill="#8ab4c8" font-size="10">虚拟卡通头像</text>`;
+}
+
+function drawCondCanvas(){
+  const c=document.getElementById('condCanvas');
+  const ctx=c.getContext('2d');
+  const {angle,distance,light,occlusion,expression}=state.cond;
+  const av=AVATARS[state.avatarIdx%AVATARS.length];
+  ctx.clearRect(0,0,200,200);
+  ctx.fillStyle='#0a2540';ctx.fillRect(0,0,200,200);
+  const scale=0.55+distance/100*0.7;
+  const bright=0.35+light/100*0.65;
+  ctx.save();
+  ctx.translate(100,100);
+  ctx.rotate(angle*Math.PI/180*0.5);
+  ctx.scale(scale,scale);
+  ctx.globalAlpha=bright;
+  ctx.fillStyle=av.hair;ctx.beginPath();ctx.ellipse(0,-28,40,24,0,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=av.skin;ctx.beginPath();ctx.arc(0,-8,34,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle='#222';ctx.beginPath();ctx.arc(-12,-12,4,0,Math.PI*2);ctx.arc(12,-12,4,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle='#8a4a2a';ctx.lineWidth=2.5;ctx.beginPath();
+  ctx.moveTo(-12,6+expression*0.08);ctx.quadraticCurveTo(0,12+expression*0.15,12,6+expression*0.08);ctx.stroke();
+  ctx.fillStyle=av.shirt;ctx.fillRect(-28,28,56,40);
+  if(occlusion>20){
+    ctx.globalAlpha=0.85;ctx.fillStyle='#222';
+    ctx.fillRect(-30,-20,60,8+occlusion*0.2);
+  }
+  if(occlusion>55){
+    ctx.fillStyle='#1a3048';ctx.fillRect(5,-40,40,70);
+  }
+  ctx.restore();
+  ctx.fillStyle='#8ab4c8';ctx.font='11px sans-serif';ctx.textAlign='center';
+  ctx.fillText('合成画面 · 非真实人脸',100,190);
+}
+
+function estimateSuccessProb(){
+  const {angle,distance,light,occlusion,expression}=state.cond;
+  let p=0.92;
+  p-=Math.abs(angle)/90*0.45;
+  p-=Math.abs(distance-55)/55*0.25;
+  p-=Math.abs(light-70)/70*0.28;
+  p-=occlusion/100*0.5;
+  p-=Math.max(0,expression-40)/60*0.2;
+  if(light<25)p-=0.15;
+  if(occlusion>70)p-=0.2;
+  return Math.max(0.02,Math.min(0.98,p));
+}
+
+function failReasons(){
+  const {angle,distance,light,occlusion,expression}=state.cond;
+  const r=[];
+  if(Math.abs(angle)>35)r.push('角度过大，面部关键点偏移');
+  if(distance<25)r.push('距离过近，画面变形');
+  if(distance>80)r.push('距离过远，细节不足');
+  if(light<30)r.push('光照过暗，对比度不足');
+  if(light>90)r.push('过曝/强光，纹理丢失');
+  if(occlusion>40)r.push('遮挡（口罩/手/物体）影响特征');
+  if(expression>55)r.push('夸张表情改变面部几何');
+  if(!r.length)r.push('随机噪声/阈值边界波动');
+  return r;
+}
+
+function renderScenes(){
+  const box=document.getElementById('sceneGrid');
+  box.innerHTML=SCENES.map(s=>`<div class="scene ${state.sceneId===s.id?'on':''}" data-id="${s.id}">
+    <div style="font-size:22px">${s.icon}</div>
+    <div class="title">${s.name}</div>
+    <div class="meta">${s.need}</div>
+  </div>`).join('');
+  box.querySelectorAll('.scene').forEach(el=>{
+    el.onclick=()=>{state.sceneId=el.dataset.id;renderScenes();showScene();persist();};
+  });
+}
+
+function showScene(){
+  const s=SCENES.find(x=>x.id===state.sceneId);
+  const av=AVATARS[state.avatarIdx%AVATARS.length];
+  drawAvatarSVG(document.getElementById('avatarSvg'),av);
+  document.getElementById('sceneDetail').innerHTML=`<strong style="color:#fff">${s.name}</strong><br/>流程：${s.flow}<br/>优势：${s.ok}<br/>风险：${s.risk}`;
+  document.getElementById('sceneFeedback').textContent='已选择「'+s.name+'」。点击“模拟一次识别”观察结果。';
+  document.getElementById('sceneFeedback').className='feedback';
+}
+
+function renderCondSliders(){
+  const conf=[
+    ['angle','角度 (°)',-60,60],
+    ['distance','距离',5,100],
+    ['light','光照',5,100],
+    ['occlusion','遮挡',0,100],
+    ['expression','表情幅度',0,100]
+  ];
+  const box=document.getElementById('condSliders');
+  box.innerHTML=conf.map(([k,lab,a,b])=>`<div class="slider-row">
+    <label><span>${lab}</span><span id="v_${k}">${state.cond[k]}</span></label>
+    <input type="range" min="${a}" max="${b}" value="${state.cond[k]}" data-k="${k}"/>
+  </div>`).join('');
+  box.querySelectorAll('input').forEach(inp=>{
+    inp.oninput=()=>{
+      state.cond[inp.dataset.k]=+inp.value;
+      document.getElementById('v_'+inp.dataset.k).textContent=inp.value;
+      drawCondCanvas();persist();
+    };
+  });
+}
+
+function updateStats(){
+  const {success,fail,reasons}=state.trials;
+  const t=success+fail;
+  document.getElementById('stSuccess').textContent=success;
+  document.getElementById('stFail').textContent=fail;
+  document.getElementById('stRate').textContent=t?Math.round(success/t*100)+'%':'—';
+  document.getElementById('reasonList').innerHTML=reasons.slice(-8).map(r=>`<li>${r}</li>`).join('')||'<li>暂无失败记录</li>';
+}
+
+function runOneTrial(){
+  const p=estimateSuccessProb();
+  const ok=Math.random()<p;
+  const fb=document.getElementById('condFeedback');
+  if(ok){
+    state.trials.success++;
+    fb.className='feedback ok';
+    fb.textContent=`识别成功（仿真）。当前条件估计成功率约 ${Math.round(p*100)}%。卡通模板匹配通过。`;
+  }else{
+    state.trials.fail++;
+    const rs=failReasons();
+    const reason=rs[Math.floor(Math.random()*rs.length)];
+    state.trials.reasons.push(reason);
+    fb.className='feedback bad';
+    fb.textContent=`识别失败（仿真）。原因：${reason}。估计成功率约 ${Math.round(p*100)}%。`;
+    document.getElementById('condHint').textContent='重试建议：减小角度与遮挡，将距离调到中等，光照保持均匀偏亮。';
+  }
+  updateStats();persist();
+}
+
+function renderTrade(){
+  const sel=document.getElementById('tradeScene');
+  sel.innerHTML=SCENES.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  const box=document.getElementById('tradeSliders');
+  const cur=state.tradeScores[sel.value]||{conv:7,acc:7,mis:5,priv:6};
+  box.innerHTML=TRADE_DIMS.map(d=>`<div class="trade-item">
+    <span>${d.label}</span>
+    <div class="bar"><i style="width:${(cur[d.k]||5)*10}%"></i></div>
+    <input type="number" min="1" max="10" value="${cur[d.k]||5}" data-k="${d.k}" style="width:40px;background:var(--panel);border:1px solid var(--line);color:#fff;border-radius:6px;padding:2px"/>
+  </div>`).join('');
+  const syncBars=()=>{
+    box.querySelectorAll('.trade-item').forEach(row=>{
+      const inp=row.querySelector('input');
+      row.querySelector('i').style.width=(Math.min(10,Math.max(1,+inp.value||1))*10)+'%';
+    });
+  };
+  box.querySelectorAll('input').forEach(inp=>inp.oninput=syncBars);
+  sel.onchange=()=>{
+    const sc=state.tradeScores[sel.value]||{conv:7,acc:7,mis:5,priv:6};
+    box.querySelectorAll('input').forEach(inp=>{inp.value=sc[inp.dataset.k]||5;});
+    syncBars();
+  };
+}
+
+function saveTrade(){
+  const id=document.getElementById('tradeScene').value;
+  const scores={};
+  document.querySelectorAll('#tradeSliders input').forEach(inp=>scores[inp.dataset.k]=Math.min(10,Math.max(1,+inp.value||1)));
+  state.tradeScores[id]=scores;
+  document.getElementById('tradeFeedback').className='feedback ok';
+  document.getElementById('tradeFeedback').textContent=`已记录「${SCENES.find(s=>s.id===id).name}」评分。`;
+  persist();toast('评分已保存');
+}
+
+function compareTrade(){
+  const ids=Object.keys(state.tradeScores);
+  if(ids.length<2){
+    document.getElementById('tradeReport').textContent='请至少记录两个场景的评分后再对比。';
+    document.getElementById('tradeFeedback').className='feedback bad';
+    document.getElementById('tradeFeedback').textContent='记录不足，请继续打分。';
+    return;
+  }
+  let lines=['【优缺点对比结论】'];
+  ids.forEach(id=>{
+    const s=state.tradeScores[id];
+    const name=SCENES.find(x=>x.id===id).name;
+    const util=(s.conv+s.acc)-(s.mis+s.priv)*0.8;
+    lines.push(`· ${name}：便利${s.conv}/准确${s.acc}/误识风险${s.mis}/隐私代价${s.priv} → 综合效用≈${util.toFixed(1)}`);
+  });
+  lines.push('权衡建议：高安全场景优先准确与低误识，并加强告知同意与数据最小化；日常解锁可更重便利，但需本地存储与防欺骗。');
+  document.getElementById('tradeReport').textContent=lines.join('\n');
+  document.getElementById('tradeFeedback').className='feedback ok';
+  document.getElementById('tradeFeedback').textContent='对比结论已生成，可写入最终报告。';
+  persist();
+}
+
+let dragId=null;
+function renderStages(){
+  if(!state.stageOrder.length){
+    state.stageOrder=STAGE_ANSWER.slice().sort(()=>Math.random()-0.5);
+  }
+  const pool=document.getElementById('stagePool');
+  const drop=document.getElementById('stageDrop');
+  const inDrop=state._dropOrder||[];
+  const poolIds=state.stageOrder.filter(id=>!inDrop.includes(id));
+  const mk=(id,i)=>{
+    const t=STAGES.find(s=>s.id===id).text;
+    return `<div class="chip" draggable="true" data-id="${id}"><span class="ord">${i+1}</span><span>${t}</span></div>`;
+  };
+  pool.innerHTML=poolIds.map((id,i)=>mk(id,i)).join('')||'<p style="font-size:12px;color:var(--muted)">池已空，可从时间线拖回。</p>';
+  drop.innerHTML=inDrop.map((id,i)=>mk(id,i)).join('')||'<p style="font-size:12px;color:var(--muted);padding:8px">拖到此处排序</p>';
+  const bind=parent=>{
+    parent.querySelectorAll('.chip').forEach(ch=>{
+      ch.ondragstart=e=>{dragId=ch.dataset.id;ch.classList.add('dragging');e.dataTransfer.effectAllowed='move';};
+      ch.ondragend=()=>ch.classList.remove('dragging');
+    });
+  };
+  bind(pool);bind(drop);
+  drop.ondragover=e=>e.preventDefault();
+  pool.ondragover=e=>e.preventDefault();
+  drop.ondrop=e=>{
+    e.preventDefault();
+    if(!dragId)return;
+    state._dropOrder=state._dropOrder||[];
+    if(!state._dropOrder.includes(dragId))state._dropOrder.push(dragId);
+    renderStages();
+  };
+  pool.ondrop=e=>{
+    e.preventDefault();
+    if(!dragId)return;
+    state._dropOrder=(state._dropOrder||[]).filter(x=>x!==dragId);
+    renderStages();
+  };
+}
+
+function checkStages(){
+  const order=state._dropOrder||[];
+  const fb=document.getElementById('stageFeedback');
+  const hint=document.getElementById('stageHint');
+  if(order.length!==4){
+    fb.className='feedback bad';fb.textContent='请将四个阶段全部放入时间线。';
+    hint.textContent='提示：从“手工规则”走向“深度学习”，再到“规模化应用与隐私治理”。';
+    return;
+  }
+  const ok=order.every((id,i)=>id===STAGE_ANSWER[i]);
+  if(ok){
+    fb.className='feedback ok';fb.textContent='排序正确！人脸识别经历了从规则到学习、再到应用与治理的演进。';
+    hint.textContent='';
+  }else{
+    let correct=0;order.forEach((id,i)=>{if(id===STAGE_ANSWER[i])correct++;});
+    fb.className='feedback bad';fb.textContent=`排序不完全正确（已对齐 ${correct}/4）。请重试。`;
+    hint.textContent='提示：最先是几何/规则方法，然后是特征工程+传统机器学习，再是深度表征，最后是落地与隐私安全。';
+  }
+  persist();
+}
+
+function genReport(){
+  const s=SCENES.find(x=>x.id===state.sceneId);
+  const t=state.trials;const total=t.success+t.fail;
+  const rate=total?Math.round(t.success/total*100):null;
+  const lines=[
+    '《适用场景与限制》学习报告',
+    '教材：山东教育出版社《人工智能通识·第一册》单元2第1节',
+    '实验：智能识别人脸 · 应用地图与条件影响（虚拟数据）',
+    '',
+    '一、重点观察场景',
+    `· ${s.name}`,
+    `· 流程摘要：${s.flow}`,
+    `· 优势：${s.ok}`,
+    `· 风险：${s.risk}`,
+    '',
+    '二、条件影响实验统计',
+    total?`· 成功 ${t.success} / 失败 ${t.fail}，成功率 ${rate}%`:'· 尚未进行条件试验',
+    t.reasons.length?`· 常见失败原因：${[...new Set(t.reasons)].slice(0,5).join('；')}`:'· 无失败原因记录',
+    '',
+    '三、优缺点权衡',
+    Object.keys(state.tradeScores).length?
+      Object.entries(state.tradeScores).map(([id,sc])=>{
+        const n=SCENES.find(x=>x.id===id).name;
+        return `· ${n}：便利${sc.conv} 准确${sc.acc} 误识${sc.mis} 隐私${sc.priv}`;
+      }).join('\n'):'· 尚未记录评分',
+    '',
+    '四、适用场景与限制（结论）',
+    '· 适用：门禁通行、设备解锁等对便利要求高且可配合补光/提示的场景；高安全业务需多因子核验。',
+    '· 限制：大角度、极端光照、严重遮挡、夸张表情会显著降低成功率；存在误识与隐私风险。',
+    '· 伦理：告知同意、最小必要、本地优先、禁止滥用真实人脸数据。',
+    '',
+    '五、声明',
+    '本报告基于卡通虚拟头像与离线规则仿真，不含真实人脸或个人隐私数据。',
+    `生成时间：${new Date().toLocaleString('zh-CN')}`
+  ];
+  state.report=lines.join('\n');
+  document.getElementById('finalReport').textContent=state.report;
+  toast('报告已生成');persist();
+}
+
+function persist(){
+  try{localStorage.setItem(KEY,JSON.stringify({
+    sceneId:state.sceneId,avatarIdx:state.avatarIdx,cond:state.cond,trials:state.trials,
+    tradeScores:state.tradeScores,stageOrder:state.stageOrder,_dropOrder:state._dropOrder,report:state.report
+  }));}catch(e){}
+}
+function load(){
+  try{
+    const raw=localStorage.getItem(KEY);if(!raw)return;
+    const d=JSON.parse(raw);
+    Object.assign(state,d);
+  }catch(e){}
+}
+function exportAll(){
+  const blob=new Blob([JSON.stringify({meta:{lab:KEY,title:'单元2第1节'},state},null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='单元2_第1节_智能识别人脸_进度.json';a.click();
+  URL.revokeObjectURL(a.href);toast('已导出 JSON');
+}
+function exportReport(){
+  if(!state.report)genReport();
+  const blob=new Blob([state.report],{type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='适用场景与限制报告.txt';a.click();
+  URL.revokeObjectURL(a.href);toast('报告已导出');
+}
+function resetAll(){
+  if(!confirm('确定重置本实验全部进度？'))return;
+  localStorage.removeItem(KEY);
+  location.reload();
+}
+
+function bindNav(){
+  document.querySelectorAll('.tab').forEach(tab=>{
+    tab.onclick=()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.tab).classList.add('active');
+    };
+  });
+  document.getElementById('btnSave').onclick=()=>{persist();toast('已保存到本地');};
+  document.getElementById('btnExport').onclick=exportAll;
+  document.getElementById('btnImport').onclick=()=>document.getElementById('importFile').click();
+  document.getElementById('importFile').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;
+    const r=new FileReader();
+    r.onload=()=>{
+      try{
+        const data=JSON.parse(r.result);
+        Object.assign(state,data.state||data);
+        persist();location.reload();
+      }catch(err){toast('导入失败：JSON 无效');}
+    };
+    r.readAsText(f);
+  };
+  document.getElementById('btnFS').onclick=()=>{
+    if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>toast('全屏不可用'));
+    else document.exitFullscreen();
+  };
+  document.getElementById('btnReset').onclick=resetAll;
+  document.getElementById('btnHelp').onclick=()=>document.getElementById('helpModal').classList.add('show');
+  document.getElementById('helpClose').onclick=()=>document.getElementById('helpModal').classList.remove('show');
+  document.getElementById('btnSimulateScene').onclick=()=>{
+    const s=SCENES.find(x=>x.id===state.sceneId);
+    const ok=Math.random()>0.25;
+    const fb=document.getElementById('sceneFeedback');
+    fb.className='feedback '+(ok?'ok':'bad');
+    fb.textContent=ok
+      ?`【通过】虚拟用户在「${s.name}」场景匹配成功。${s.ok}`
+      :`【未通过】条件不佳（仿真）。${s.risk}。可切换头像或前往“条件影响”模块深入实验。`;
+  };
+  document.getElementById('btnNextAvatar').onclick=()=>{
+    state.avatarIdx=(state.avatarIdx+1)%AVATARS.length;showScene();drawCondCanvas();persist();
+  };
+  document.getElementById('btnRunCond').onclick=runOneTrial;
+  document.getElementById('btnBatchCond').onclick=()=>{for(let i=0;i<10;i++)runOneTrial();toast('已完成10次试验');};
+  document.getElementById('btnSaveTrade').onclick=saveTrade;
+  document.getElementById('btnCompareTrade').onclick=compareTrade;
+  document.getElementById('btnCheckStages').onclick=checkStages;
+  document.getElementById('btnShuffleStages').onclick=()=>{
+    state._dropOrder=[];state.stageOrder=STAGE_ANSWER.slice().sort(()=>Math.random()-0.5);
+    document.getElementById('stageFeedback').className='feedback';
+    document.getElementById('stageFeedback').textContent='已打乱，请重新排序。';
+    renderStages();persist();
+  };
+  document.getElementById('btnGenReport').onclick=genReport;
+  document.getElementById('btnExportReport').onclick=exportReport;
+  document.getElementById('btnCopyReport').onclick=async()=>{
+    if(!state.report)genReport();
+    try{await navigator.clipboard.writeText(state.report);toast('已复制');}
+    catch(e){toast('复制失败，请手动选择文本');}
+  };
+}
+
+load();
+bindNav();
+renderScenes();showScene();
+renderCondSliders();drawCondCanvas();updateStats();
+renderTrade();
+state._dropOrder=state._dropOrder||[];
+renderStages();
+if(state.report)document.getElementById('finalReport').textContent=state.report;
+})();
+</script>
+</body>
+</html>

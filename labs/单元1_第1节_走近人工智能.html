@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>单元1·第1节 走近人工智能｜人工智能创作与机器感知互动实验室</title>
+<style>
+:root{
+  --bg0:#0f1530;--bg1:#1a2455;--bg2:#24356e;
+  --violet:#6b5cff;--cyan:#2ec4ff;--gold:#f0b429;--coral:#ff7a59;
+  --panel:rgba(255,255,255,.08);--panel2:rgba(255,255,255,.12);
+  --card:#f7f9ff;--ink:#1a2140;--muted:#5a6485;--line:rgba(255,255,255,.18);
+  --ok:#1f9d6c;--warn:#d97706;--err:#d64545;--shadow:0 12px 40px rgba(10,16,40,.35);
+  --r:16px;--r2:12px;--font:"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:var(--font);color:#eef2ff;background:
+  radial-gradient(1200px 600px at 10% -10%,rgba(107,92,255,.45),transparent 60%),
+  radial-gradient(900px 500px at 90% 0%,rgba(46,196,255,.28),transparent 55%),
+  radial-gradient(700px 400px at 70% 100%,rgba(240,180,41,.18),transparent 50%),
+  linear-gradient(165deg,var(--bg0),var(--bg1) 45%,var(--bg2));}
+body{min-height:100vh;display:flex;flex-direction:column}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer;border:none;border-radius:12px;padding:10px 14px;background:linear-gradient(135deg,var(--violet),#4f7cff);color:#fff;box-shadow:0 6px 18px rgba(79,124,255,.35);transition:transform .2s,opacity .2s}
+button:hover{transform:translateY(-1px)}
+button:active{transform:translateY(0)}
+button.ghost{background:rgba(255,255,255,.1);box-shadow:none;border:1px solid var(--line)}
+button.gold{background:linear-gradient(135deg,#f0b429,#ff8a3d)}
+button.ok{background:linear-gradient(135deg,#1f9d6c,#2ec4a0)}
+button.warn{background:linear-gradient(135deg,#d97706,#f0b429);color:#1a2140}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.icon{width:18px;height:18px;vertical-align:-3px;margin-right:6px}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 18px;backdrop-filter:blur(16px);background:rgba(15,21,48,.55);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50}
+.brand{display:flex;flex-direction:column;min-width:220px}
+.brand b{font-size:15px;letter-spacing:.5px}
+.brand span{font-size:12px;color:#b8c2e6}
+.progress-wrap{flex:1;max-width:360px}
+.progress-label{display:flex;justify-content:space-between;font-size:12px;color:#c5ceef;margin-bottom:4px}
+.bar{height:8px;border-radius:99px;background:rgba(255,255,255,.12);overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--violet),var(--cyan),var(--gold));transition:width .35s}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.actions button{padding:8px 12px;font-size:13px;min-height:40px}
+.layout{display:grid;grid-template-columns:260px 1fr 300px;gap:14px;padding:14px;flex:1;min-height:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(14px);box-shadow:var(--shadow);overflow:auto}
+.panel h3{margin:0;padding:14px 16px;font-size:15px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.panel .body{padding:14px 16px}
+.left .step{padding:12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid transparent;margin-bottom:10px;cursor:pointer;transition:.2s}
+.left .step.active{border-color:rgba(46,196,255,.55);background:rgba(46,196,255,.12);box-shadow:inset 0 0 0 1px rgba(107,92,255,.25)}
+.left .step.done{border-color:rgba(31,157,108,.5)}
+.left .step .n{display:inline-flex;width:24px;height:24px;border-radius:50%;align-items:center;justify-content:center;background:rgba(255,255,255,.12);font-size:12px;margin-right:8px}
+.left .step.active .n{background:linear-gradient(135deg,var(--violet),var(--cyan))}
+.mat{font-size:13px;color:#c5ceef;line-height:1.55;margin-top:8px}
+.center{display:flex;flex-direction:column;gap:12px;min-width:0}
+.workspace{flex:1;background:linear-gradient(180deg,rgba(247,249,255,.98),rgba(232,238,255,.95));color:var(--ink);border-radius:var(--r);border:1px solid rgba(255,255,255,.35);box-shadow:var(--shadow);padding:18px;overflow:auto;min-height:420px}
+.workspace h2{margin:0 0 6px;font-size:22px;background:linear-gradient(90deg,#4f46b8,#0ea5c9);-webkit-background-clip:text;background-clip:text;color:transparent}
+.workspace .task{color:var(--muted);font-size:14px;margin-bottom:14px;line-height:1.6}
+.mod{display:none}.mod.active{display:block;animation:fade .35s ease}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.card{background:#fff;border:1px solid #e4e9f7;border-radius:14px;padding:12px;box-shadow:0 6px 18px rgba(40,60,120,.06)}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:#eef2ff;border:1px solid #d7dff7;color:#334;margin:4px;cursor:grab;user-select:none;font-size:13px}
+.chip.selected,.chip.dragging{outline:2px solid var(--violet);background:#e8e4ff}
+.drop{min-height:52px;border:2px dashed #c8d2ef;border-radius:12px;padding:8px;background:#f4f7ff;transition:.2s}
+.drop.over{border-color:var(--cyan);background:#e8f8ff}
+.timeline{display:flex;gap:10px;overflow-x:auto;padding:8px 0 16px}
+.tl-item{min-width:150px;background:#fff;border:1px solid #e0e7ff;border-radius:14px;padding:12px;cursor:grab;position:relative}
+.tl-item::after{content:"";position:absolute;right:-12px;top:50%;width:12px;height:3px;background:linear-gradient(90deg,var(--violet),var(--cyan))}
+.tl-item:last-child::after{display:none}
+.tl-item .y{font-weight:700;color:#4f46b8;font-size:13px}
+.tl-item .t{font-size:14px;margin-top:4px}
+.tl-slots{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.tl-slot{flex:1;min-width:140px;min-height:90px;border:2px dashed #c8d2ef;border-radius:14px;padding:8px;background:#f7f9ff}
+.tl-slot .label{font-size:12px;color:#788;margin-bottom:6px}
+.map-tabs{display:flex;gap:8px;margin-bottom:12px}
+.map-tabs button{background:#eef2ff;color:#334;box-shadow:none;border:1px solid #d7dff7}
+.map-tabs button.on{background:linear-gradient(135deg,var(--violet),#4f7cff);color:#fff;border-color:transparent}
+.map-scene{position:relative;height:280px;border-radius:16px;overflow:hidden;background:
+  linear-gradient(180deg,#dbeafe 0%,#fef3c7 55%,#d1fae5 100%);border:1px solid #d7dff7}
+.hotspot{position:absolute;width:44px;height:44px;border-radius:50%;border:2px solid #fff;background:rgba(79,70,184,.85);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;box-shadow:0 6px 16px rgba(40,40,100,.25);animation:pulse 2s infinite}
+.hotspot.found{background:rgba(31,157,108,.9);animation:none}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+.table{width:100%;border-collapse:collapse;font-size:13px}
+.table th,.table td{border:1px solid #e4e9f7;padding:8px;text-align:left}
+.table th{background:#eef2ff}
+.table input,.table select{width:100%;padding:6px 8px;border:1px solid #d7dff7;border-radius:8px}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.compare .card h4{margin:0 0 8px}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;background:#eef2ff}
+.tag.ai{background:#ddf7ef;color:#0f766e}
+.tag.auto{background:#fff4e5;color:#9a3412}
+.right .body{font-size:13px;line-height:1.55;color:#dce4ff}
+.feedback{padding:12px;border-radius:12px;background:rgba(255,255,255,.08);border:1px solid var(--line);margin-bottom:10px}
+.feedback.ok{border-color:rgba(31,157,108,.5);background:rgba(31,157,108,.15)}
+.feedback.warn{border-color:rgba(217,119,6,.5);background:rgba(217,119,6,.15)}
+.feedback.err{border-color:rgba(214,69,69,.5);background:rgba(214,69,69,.15)}
+.param{margin-bottom:12px}
+.param label{display:flex;justify-content:space-between;margin-bottom:4px;font-size:12px;color:#c5ceef}
+.param input[type=range]{width:100%}
+.logbar{margin:0 14px 14px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(14px);max-height:140px;overflow:auto}
+.logbar h4{margin:0;padding:10px 14px;font-size:13px;border-bottom:1px solid var(--line);color:#dce4ff}
+.logbar .logs{padding:8px 14px;font-size:12px;color:#b8c2e6;line-height:1.7}
+.modal-bg{position:fixed;inset:0;background:rgba(8,12,30,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-bg.show{display:flex}
+.modal{background:#f7f9ff;color:var(--ink);border-radius:18px;max-width:640px;width:100%;max-height:80vh;overflow:auto;padding:20px;box-shadow:var(--shadow)}
+.modal h3{margin:0 0 10px}
+.toast{position:fixed;right:18px;bottom:18px;background:#1a2140;color:#fff;padding:12px 16px;border-radius:12px;box-shadow:var(--shadow);opacity:0;transform:translateY(10px);transition:.3s;z-index:200;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+.ability-board{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
+.ability{text-align:center;padding:12px 8px;border-radius:14px;background:linear-gradient(180deg,#fff,#eef2ff);border:1px solid #d7dff7;cursor:pointer}
+.ability.on{border-color:#6b5cff;box-shadow:0 0 0 2px rgba(107,92,255,.25)}
+.match-zone{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.slot-title{font-size:12px;color:#667;margin-bottom:6px}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.score{font-size:28px;font-weight:700;background:linear-gradient(90deg,var(--violet),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hint-box{background:#fff8e8;border:1px solid #f5d78e;border-radius:12px;padding:10px 12px;color:#7a5110;font-size:13px;margin-top:10px}
+.err-demo{background:#fff1f1;border:1px solid #f5b5b5;border-radius:12px;padding:10px;font-size:13px;color:#8a2b2b;margin-top:10px}
+@media (max-width:1200px){.layout{grid-template-columns:220px 1fr 260px}}
+@media (max-width:980px){.layout{grid-template-columns:1fr}.left,.right{max-height:220px}.ability-board,.match-zone,.compare,.grid2,.grid3{grid-template-columns:1fr 1fr}}
+@media (prefers-reduced-motion:reduce)*{animation:none!important;transition:none!important}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <b>人工智能创作与机器感知互动实验室</b>
+    <span>单元1·第1节｜走近人工智能 · AI世界探索馆</span>
+  </div>
+  <div class="progress-wrap">
+    <div class="progress-label"><span>学习进度</span><span id="progText">0/5</span></div>
+    <div class="bar"><i id="progBar"></i></div>
+  </div>
+  <div class="actions">
+    <button class="ghost" id="btnSave" title="保存"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h12l4 4v14H5z"/><path d="M9 3v6h8M9 21v-8h6v8"/></svg>保存</button>
+    <button class="ghost" id="btnExport"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12"/><path d="M8 11l4 4 4-4"/><path d="M4 21h16"/></svg>导出</button>
+    <button class="ghost" id="btnImport"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21V9"/><path d="M8 13l4-4 4 4"/><path d="M4 3h16"/></svg>导入</button>
+    <button class="ghost" id="btnFull"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>全屏</button>
+    <button class="ghost" id="btnReset"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/></svg>重置</button>
+    <button class="gold" id="btnHelp"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 16v-1m0-7a3 3 0 0 1 1.5 5.5A2 2 0 0 0 12 15"/></svg>帮助</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="panel left">
+    <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h14"/></svg>任务与素材</h3>
+    <div class="body">
+      <div class="step active" data-step="0"><span class="n">1</span>AI发展时间轴</div>
+      <div class="step" data-step="1"><span class="n">2</span>AI能力拼图</div>
+      <div class="step" data-step="2"><span class="n">3</span>身边AI应用地图</div>
+      <div class="step" data-step="3"><span class="n">4</span>自动化 vs 人工智能</div>
+      <div class="step" data-step="5"><span class="n">5</span>项目成果与评价</div>
+      <div class="mat">
+        <b style="color:#fff">学习材料</b><br/>
+        · 图灵机思想实验（1936）<br/>
+        · 达特茅斯会议（1956）提出“人工智能”<br/>
+        · AI能力：看、听、说、想、动<br/>
+        · 比较：按规则执行 vs 从数据学习
+      </div>
+      <div class="btn-row">
+        <button class="ghost" id="btnRestoreEx" style="width:100%">恢复教材示例</button>
+        <button class="ghost" id="btnViewSave" style="width:100%">查看本机保存</button>
+        <button class="ghost" id="btnClearSave" style="width:100%">清除本机数据</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="center">
+    <section class="workspace" id="workspace">
+      <!-- Module 1 Timeline -->
+      <div class="mod active" id="mod0">
+        <h2>AI世界探索馆 · 发展时间轴</h2>
+        <p class="task">任务：把下方历史事件拖入正确年代槽位（也可先点击卡片再点击槽位）。完成后查看反馈。可调节“线索强度”与“干扰项”条件。</p>
+        <div class="param" style="max-width:420px;color:var(--muted)">
+          <label><span>线索强度（显示更多提示）</span><span id="hintLvVal">2</span></label>
+          <input type="range" id="hintLv" min="0" max="3" value="2" />
+        </div>
+        <div class="param" style="max-width:420px;color:var(--muted)">
+          <label><span>干扰项数量</span><span id="noiseVal">1</span></label>
+          <input type="range" id="noiseLv" min="0" max="2" value="1" />
+        </div>
+        <p style="font-size:13px;color:var(--muted)">可拖拽事件卡片：</p>
+        <div class="timeline" id="tlPool"></div>
+        <div class="tl-slots" id="tlSlots"></div>
+        <div class="btn-row">
+          <button id="btnCheckTl" class="ok">检查排序</button>
+          <button class="ghost" id="btnHintTl">查看提示</button>
+          <button class="ghost" id="btnRetryTl">重试</button>
+          <button class="warn" id="btnErrTl">注入错误示例</button>
+        </div>
+        <div class="hint-box" id="tlHint" style="display:none"></div>
+        <div class="err-demo" id="tlErr" style="display:none">错误示例：把“达特茅斯会议”放在1936——年代与事件错位。请重试并对照线索。</div>
+      </div>
+
+      <!-- Module 2 Ability Puzzle -->
+      <div class="mod" id="mod1">
+        <h2>AI能力拼图 · 看听说想动</h2>
+        <p class="task">任务：选择一种AI能力，再把匹配的设备/场景/技术拖入或点击填入对应区域。完成至少3组成对。</p>
+        <div class="ability-board" id="abilityBoard"></div>
+        <div class="match-zone">
+          <div class="card"><div class="slot-title">设备 / 产品</div><div class="drop" id="dropDevice" data-kind="device"></div></div>
+          <div class="card"><div class="slot-title">应用场景</div><div class="drop" id="dropScene" data-kind="scene"></div></div>
+          <div class="card"><div class="slot-title">相关技术</div><div class="drop" id="dropTech" data-kind="tech"></div></div>
+        </div>
+        <p style="font-size:13px;color:var(--muted);margin-top:12px">素材库（拖拽或点击选中，再点击上方空位）：</p>
+        <div id="abilityPool"></div>
+        <div class="btn-row">
+          <button class="ok" id="btnCheckAb">提交配对</button>
+          <button class="ghost" id="btnHintAb">分层提示</button>
+          <button class="ghost" id="btnRetryAb">清空重试</button>
+        </div>
+        <div id="abPairs" class="card" style="margin-top:12px;font-size:13px">已记录配对：暂无</div>
+      </div>
+
+      <!-- Module 3 Map -->
+      <div class="mod" id="mod2">
+        <h2>身边AI应用地图 · 校园 / 家庭 / 社区</h2>
+        <p class="task">任务：切换场景，点击热点发现AI设备，并在表格填写“设备—功能—相关技术”。至少发现5处。</p>
+        <div class="map-tabs" id="mapTabs">
+          <button class="on" data-map="campus">校园</button>
+          <button data-map="home">家庭</button>
+          <button data-map="community">社区</button>
+        </div>
+        <div class="map-scene" id="mapScene"></div>
+        <div class="param" style="max-width:420px;margin-top:10px;color:var(--muted)">
+          <label><span>发现难度（热点透明度）</span><span id="mapDiffVal">中</span></label>
+          <input type="range" id="mapDiff" min="1" max="3" value="2" />
+        </div>
+        <div class="card" style="margin-top:12px;overflow:auto">
+          <table class="table" id="mapTable">
+            <thead><tr><th>场景</th><th>设备</th><th>功能</th><th>相关技术</th><th>操作</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="btn-row">
+          <button class="ok" id="btnAddRow">手动添加一行</button>
+          <button class="ghost" id="btnHintMap">提示</button>
+          <button class="warn" id="btnErrMap">错误样例（功能写错）</button>
+        </div>
+      </div>
+
+      <!-- Module 4 Compare -->
+      <div class="mod" id="mod3">
+        <h2>比较台 · 普通自动化 vs AI设备</h2>
+        <p class="task">任务：把特征卡片拖到正确一侧。调节“判断严格度”，再提交评分。观察错误样例中“定时电饭煲”为何不是AI。</p>
+        <div class="param" style="max-width:420px;color:var(--muted)">
+          <label><span>判断严格度</span><span id="strictVal">标准</span></label>
+          <input type="range" id="strictLv" min="1" max="3" value="2" />
+        </div>
+        <div class="compare">
+          <div class="card"><h4><span class="tag auto">普通自动化</span> 按预设规则执行</h4><div class="drop" id="dropAuto" style="min-height:160px"></div></div>
+          <div class="card"><h4><span class="tag ai">人工智能</span> 感知·学习·适应</h4><div class="drop" id="dropAI" style="min-height:160px"></div></div>
+        </div>
+        <p style="font-size:13px;color:var(--muted);margin-top:10px">待分类特征：</p>
+        <div id="cmpPool"></div>
+        <div class="btn-row">
+          <button class="ok" id="btnCheckCmp">检查分类</button>
+          <button class="ghost" id="btnHintCmp">提示</button>
+          <button class="ghost" id="btnRetryCmp">重试</button>
+          <button class="warn" id="btnErrCmp">错误示例</button>
+        </div>
+        <div class="err-demo" id="cmpErr" style="display:none">错误示例：把“定时开关电饭煲”放进AI侧——它只会按时间执行，不会根据食材状态学习调整，属于自动化。</div>
+      </div>
+
+      <!-- Module 5 Project -->
+      <div class="mod" id="mod4">
+        <h2>项目成果 · 身边的AI应用地图</h2>
+        <p class="task">汇总前序发现，生成项目卡与评价记录。可导出 JSON / 文本，用于课堂展示。</p>
+        <div class="grid2">
+          <div class="card">
+            <label style="font-size:13px;color:var(--muted)">项目标题</label>
+            <input id="projTitle" value="身边的AI应用地图" style="width:100%;padding:8px;border:1px solid #d7dff7;border-radius:8px;margin:6px 0 10px" />
+            <label style="font-size:13px;color:var(--muted)">调查小结（不填写真实姓名/住址）</label>
+            <textarea id="projNote" rows="5" style="width:100%;padding:8px;border:1px solid #d7dff7;border-radius:8px;resize:vertical" placeholder="我在校园/家庭/社区发现了哪些AI？它们分别体现看、听、说、想、动中的哪些能力？"></textarea>
+          </div>
+          <div class="card">
+            <div>完成度评分</div>
+            <div class="score" id="projScore">0</div>
+            <div id="evalList" style="font-size:13px;margin-top:8px;line-height:1.7"></div>
+          </div>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <h4 style="margin:0 0 8px">自动生成的地图摘要</h4>
+          <pre id="projPreview" style="white-space:pre-wrap;font-size:13px;margin:0;color:#334;font-family:var(--font)"></pre>
+        </div>
+        <div class="btn-row">
+          <button class="ok" id="btnGenProj">生成项目与评价</button>
+          <button class="gold" id="btnExportProj">导出成果</button>
+          <button class="ghost" id="btnRefreshEval">刷新评分</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <aside class="panel right">
+    <h3><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"/></svg>参数与反馈</h3>
+    <div class="body">
+      <div class="feedback" id="fbBox">欢迎进入探索馆。请从左侧选择任务模块开始。</div>
+      <div class="param"><label><span>过程动画速度</span><span id="spdVal">中</span></label><input type="range" id="spd" min="1" max="3" value="2" /></div>
+      <div class="param"><label><span>反馈详细度</span><span id="fbDetailVal">标准</span></label><input type="range" id="fbDetail" min="1" max="3" value="2" /></div>
+      <div class="card" style="background:rgba(255,255,255,.08);border-color:var(--line);color:#eef2ff">
+        <b>当前模块状态</b>
+        <div id="modStatus" style="margin-top:6px;font-size:13px;color:#c5ceef">时间轴：未完成</div>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:#aab6e0;line-height:1.6">
+        隐私提示：请勿填写真实姓名、住址、电话。本页仅本机保存，不联网上传。
+      </div>
+    </div>
+  </aside>
+</div>
+
+<footer class="logbar">
+  <h4>过程日志</h4>
+  <div class="logs" id="logs">系统就绪 · 离线规则模拟模式</div>
+</footer>
+
+<div class="modal-bg" id="helpModal">
+  <div class="modal">
+    <h3>使用帮助 · 走近人工智能</h3>
+    <p style="font-size:14px;line-height:1.7;color:#445">
+      本工具对应教材 P2—8。通过时间轴、能力拼图、应用地图和自动化比较，理解什么是人工智能。<br/>
+      <b>操作：</b>拖拽优先；若设备不支持拖拽，可先点击素材再点击目标空位。<br/>
+      <b>保存：</b>顶部“保存/导出/导入”仅处理本机数据。<br/>
+      <b>全屏：</b>适合课堂大屏演示。<br/>
+      AI能力强调“感知—决策—行动”，区别于只会按固定规则运行的自动化设备。
+    </p>
+    <div class="btn-row"><button id="closeHelp">关闭</button></div>
+  </div>
+</div>
+<input type="file" id="importFile" accept="application/json,.json,.txt" hidden />
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+"use strict";
+const STORAGE_KEY = "lab_u1_s1_ai_explore_v1";
+const $ = (s,el=document)=>el.querySelector(s);
+const $$ = (s,el=document)=>[...el.querySelectorAll(s)];
+
+const state = {
+  step:0,
+  done:[false,false,false,false,false],
+  timelineOrder:[],
+  ability:null,
+  pairs:[],
+  mapFinds:[],
+  mapRows:[],
+  cmp:{auto:[],ai:[]},
+  logs:[],
+  selectedChip:null,
+  params:{hintLv:2,noiseLv:1,mapDiff:2,strictLv:2,spd:2,fbDetail:2},
+  project:{title:"身边的AI应用地图",note:"",score:0}
+};
+
+const TL_EVENTS = [
+  {id:"turing", year:"1936", title:"图灵机思想", ok:true, tip:"计算模型奠基，思考“机器能否思维”"},
+  {id:"dartmouth", year:"1956", title:"达特茅斯会议", ok:true, tip:"正式提出“人工智能”一词"},
+  {id:"expert", year:"1970s", title:"专家系统兴起", ok:true, tip:"用规则知识解决专业问题"},
+  {id:"deep", year:"2010s", title:"深度学习高潮", ok:true, tip:"大数据+算力推动感知与生成"},
+  {id:"llm", year:"2020s", title:"生成式AI普及", ok:true, tip:"文本图像音乐等创作工具走入校园"},
+  {id:"noise1", year:"1985", title:"家用计算器普及", ok:false, tip:"干扰项：计算工具≠人工智能"},
+  {id:"noise2", year:"1999", title:"MP3随身听流行", ok:false, tip:"干扰项：播放设备≠AI"}
+];
+const TL_SLOTS = ["1936","1956","1970s","2010s","2020s"];
+
+const ABILITIES = [
+  {id:"see", name:"看", color:"#6b5cff"},
+  {id:"hear", name:"听", color:"#2ec4ff"},
+  {id:"speak", name:"说", color:"#f0b429"},
+  {id:"think", name:"想", color:"#ff7a59"},
+  {id:"act", name:"动", color:"#1f9d6c"}
+];
+const AB_ITEMS = [
+  {id:"cam", text:"校园门禁摄像头", kind:"device", ab:"see"},
+  {id:"asr", text:"语音助手音箱", kind:"device", ab:"hear"},
+  {id:"tts", text:"智能播报屏", kind:"device", ab:"speak"},
+  {id:"rec", text:"作业推荐系统", kind:"device", ab:"think"},
+  {id:"robot", text:"配送机器人", kind:"device", ab:"act"},
+  {id:"gate", text:"进出校识别", kind:"scene", ab:"see"},
+  {id:"class", text:"课堂语音提问", kind:"scene", ab:"hear"},
+  {id:"notice", text:"广播通知播报", kind:"scene", ab:"speak"},
+  {id:"plan", text:"个性化学习路径", kind:"scene", ab:"think"},
+  {id:"lib", text:"图书室自动送书", kind:"scene", ab:"act"},
+  {id:"cv", text:"计算机视觉", kind:"tech", ab:"see"},
+  {id:"speech", text:"语音识别", kind:"tech", ab:"hear"},
+  {id:"nlgen", text:"语音合成/NLG", kind:"tech", ab:"speak"},
+  {id:"ml", text:"机器学习推理", kind:"tech", ab:"think"},
+  {id:"ctrl", text:"路径规划与控制", kind:"tech", ab:"act"}
+];
+
+const MAP_DATA = {
+  campus:[
+    {id:"c1",x:18,y:30,name:"智能门禁",func:"识别身份放行",tech:"人脸/卡证识别"},
+    {id:"c2",x:55,y:40,name:"语音答疑终端",func:"回答常见问题",tech:"语音识别+对话"},
+    {id:"c3",x:78,y:62,name:"图书馆荐书屏",func:"推荐阅读",tech:"推荐算法"},
+    {id:"c4",x:35,y:70,name:"操场行为分析摄像头",func:"安全巡查提示",tech:"计算机视觉"}
+  ],
+  home:[
+    {id:"h1",x:22,y:35,name:"智能音箱",func:"语音控制家电",tech:"语音识别"},
+    {id:"h2",x:60,y:28,name:"扫地机器人",func:"自主清扫避障",tech:"感知定位+规划"},
+    {id:"h3",x:75,y:65,name:"智能冰箱助手",func:"食材识别提醒",tech:"图像识别"}
+  ],
+  community:[
+    {id:"m1",x:30,y:40,name:"智慧垃圾桶",func:"辅助分类提示",tech:"物体识别"},
+    {id:"m2",x:58,y:55,name:"路口车流屏",func:"拥堵预测显示",tech:"视觉分析+预测"},
+    {id:"m3",x:80,y:30,name:"社区问询机器人",func:"接待咨询",tech:"对话系统"}
+  ]
+};
+
+const CMP_ITEMS = [
+  {id:"a1", text:"定时开关电饭煲", side:"auto"},
+  {id:"a2", text:"固定轨迹流水线机械臂", side:"auto"},
+  {id:"a3", text:"按按钮播放预设录音", side:"auto"},
+  {id:"i1", text:"根据房间地图规划清扫", side:"ai"},
+  {id:"i2", text:"识别陌生人并提醒", side:"ai"},
+  {id:"i3", text:"根据提问生成不同回答", side:"ai"},
+  {id:"i4", text:"从错误中调整推荐结果", side:"ai"},
+  {id:"a4", text:"永远同一时间响铃的闹钟", side:"auto"}
+];
+
+function log(msg){
+  const t = new Date().toLocaleTimeString();
+  state.logs.unshift(`[${t}] ${msg}`);
+  if(state.logs.length>40) state.logs.pop();
+  $("#logs").textContent = state.logs.join("\n");
+}
+function toast(msg){
+  const el=$("#toast"); el.textContent=msg; el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"),2200);
+}
+function setFeedback(html, type=""){
+  const box=$("#fbBox"); box.className="feedback "+type; box.innerHTML=html;
+}
+function updateProgress(){
+  const n=state.done.filter(Boolean).length;
+  $("#progText").textContent=`${n}/5`;
+  $("#progBar").style.width=`${(n/5)*100}%`;
+  const labels=["时间轴","能力拼图","应用地图","自动化比较","项目成果"];
+  $("#modStatus").innerHTML = labels.map((l,i)=>`${l}：${state.done[i]?"已完成 ✓":"进行中/未完成"}`).join("<br/>");
+}
+function goStep(i){
+  state.step=i;
+  $$(".left .step").forEach(s=>s.classList.toggle("active", +s.dataset.step===i || (i===4 && +s.dataset.step===5)));
+  // fix: step 4 is mod4, left step data-step=5 for project - map carefully
+  $$(".left .step").forEach(s=>{
+    const ds=+s.dataset.step;
+    const active = (i===4 && ds===5) || (i<4 && ds===i);
+    s.classList.toggle("active", active);
+    const doneIdx = ds===5 ? 4 : ds;
+    s.classList.toggle("done", !!state.done[doneIdx]);
+  });
+  $$(".mod").forEach((m,idx)=>m.classList.toggle("active", idx===i));
+  log(`切换到模块 ${i+1}`);
+}
+
+/* ===== Timeline ===== */
+function getTlPoolItems(){
+  const noise=state.params.noiseLv;
+  const base=TL_EVENTS.filter(e=>e.ok);
+  const noises=TL_EVENTS.filter(e=>!e.ok).slice(0,noise);
+  return shuffle([...base,...noises]);
+}
+function shuffle(arr){
+  const a=[...arr];
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function renderTimeline(){
+  const pool=$("#tlPool"); const slots=$("#tlSlots");
+  pool.innerHTML=""; slots.innerHTML="";
+  const placed=new Set(Object.values(state.timelineOrder||{}));
+  // state.timelineOrder as map slotYear->id
+  if(!state.tlMap) state.tlMap={};
+  getTlPoolItems().forEach(ev=>{
+    if(Object.values(state.tlMap).includes(ev.id)) return;
+    pool.appendChild(makeTlCard(ev));
+  });
+  TL_SLOTS.forEach(y=>{
+    const slot=document.createElement("div");
+    slot.className="tl-slot"; slot.dataset.year=y;
+    slot.innerHTML=`<div class="label">年代槽：${y}</div><div class="drop-inner"></div>`;
+    const inner=slot.querySelector(".drop-inner");
+    enableDrop(slot, (id)=>{
+      // remove from other slots
+      Object.keys(state.tlMap).forEach(k=>{if(state.tlMap[k]===id) delete state.tlMap[k];});
+      state.tlMap[y]=id;
+      renderTimeline();
+      log(`放入 ${id} → ${y}`);
+    });
+    if(state.tlMap[y]){
+      const ev=TL_EVENTS.find(e=>e.id===state.tlMap[y]);
+      if(ev) inner.appendChild(makeTlCard(ev,true));
+    }
+    slots.appendChild(slot);
+  });
+}
+function makeTlCard(ev, inSlot=false){
+  const d=document.createElement("div");
+  d.className="tl-item chip"; d.draggable=true; d.dataset.id=ev.id;
+  const showYear = state.params.hintLv>=2;
+  d.innerHTML=`<div class="y">${showYear?ev.year:"????"}</div><div class="t">${ev.title}</div>`;
+  if(state.params.hintLv>=3) d.title=ev.tip;
+  d.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain",ev.id); d.classList.add("dragging"); state.selectedChip=ev.id;});
+  d.addEventListener("dragend",()=>d.classList.remove("dragging"));
+  d.addEventListener("click",()=>{
+    state.selectedChip=ev.id;
+    $$(".tl-item").forEach(x=>x.classList.toggle("selected", x.dataset.id===ev.id));
+    toast("已选中，请点击目标年代槽");
+  });
+  return d;
+}
+function enableDrop(el, onDrop){
+  el.addEventListener("dragover",e=>{e.preventDefault(); el.classList.add("over");});
+  el.addEventListener("dragleave",()=>el.classList.remove("over"));
+  el.addEventListener("drop",e=>{
+    e.preventDefault(); el.classList.remove("over");
+    const id=e.dataTransfer.getData("text/plain")||state.selectedChip;
+    if(id) onDrop(id);
+  });
+  el.addEventListener("click",()=>{
+    if(state.selectedChip) onDrop(state.selectedChip);
+  });
+}
+function checkTimeline(){
+  let ok=0, total=TL_SLOTS.length, detail=[];
+  TL_SLOTS.forEach(y=>{
+    const id=state.tlMap[y];
+    const ev=TL_EVENTS.find(e=>e.id===id);
+    if(ev && ev.ok && ev.year===y){ok++; detail.push(`${y} ✓`);}
+    else detail.push(`${y} ✗`);
+  });
+  const pass=ok===total;
+  state.done[0]=pass;
+  const detailLv=state.params.fbDetail;
+  let msg=`时间轴正确 ${ok}/${total}。<br/>`+(detailLv>=2?detail.join(" · "):"");
+  if(!pass) msg+="<br/>请对照线索：图灵机→达特茅斯→专家系统→深度学习→生成式AI。干扰项不要放入。";
+  else msg+="<br/>很棒！你理清了从思想实验到生成式AI的主线。";
+  setFeedback(msg, pass?"ok":"err");
+  updateProgress();
+  log(`时间轴检查：${ok}/${total}`);
+  if(pass) toast("模块1完成");
+}
+
+/* ===== Ability ===== */
+function renderAbilities(){
+  const board=$("#abilityBoard"); board.innerHTML="";
+  ABILITIES.forEach(a=>{
+    const d=document.createElement("div");
+    d.className="ability"+(state.ability===a.id?" on":"");
+    d.innerHTML=`<div style="width:36px;height:36px;margin:0 auto 6px;border-radius:50%;background:${a.color};color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700">${a.name}</div><div style="font-size:12px">${a.name}的能力</div>`;
+    d.onclick=()=>{state.ability=a.id; clearAbDrops(); renderAbilities(); renderAbPool(); setFeedback(`当前能力：【${a.name}】请匹配设备、场景、技术。`,"warn");};
+    board.appendChild(d);
+  });
+  renderAbPool();
+  ["dropDevice","dropScene","dropTech"].forEach(id=>{
+    const el=$("#"+id);
+    enableDrop(el,(itemId)=>{
+      if(!state.ability){toast("请先选择一种能力");return;}
+      const item=AB_ITEMS.find(x=>x.id===itemId);
+      if(!item||item.kind!==el.dataset.kind){toast("类型不匹配");return;}
+      el.innerHTML="";
+      const c=document.createElement("div"); c.className="chip"; c.textContent=item.text; c.dataset.id=item.id;
+      el.appendChild(c); el.dataset.filled=item.id;
+      log(`填入${item.kind}:${item.text}`);
+    });
+  });
+}
+function clearAbDrops(){
+  ["dropDevice","dropScene","dropTech"].forEach(id=>{const el=$("#"+id); el.innerHTML=""; delete el.dataset.filled;});
+}
+function renderAbPool(){
+  const pool=$("#abilityPool"); pool.innerHTML="";
+  AB_ITEMS.forEach(item=>{
+    const c=document.createElement("div");
+    c.className="chip"; c.draggable=true; c.dataset.id=item.id;
+    c.textContent=`[${item.kind==="device"?"设备":item.kind==="scene"?"场景":"技术"}] ${item.text}`;
+    c.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain",item.id); state.selectedChip=item.id;});
+    c.addEventListener("click",()=>{state.selectedChip=item.id; $$("#abilityPool .chip").forEach(x=>x.classList.toggle("selected",x.dataset.id===item.id)); toast("已选中，点击上方空位填入");});
+    pool.appendChild(c);
+  });
+  $("#abPairs").innerHTML="已记录配对："+(state.pairs.length?state.pairs.map(p=>`<div>· ${p}</div>`).join(""):"暂无");
+}
+function checkAbility(){
+  if(!state.ability){setFeedback("请先选择看/听/说/想/动。","err");return;}
+  const d=$("#dropDevice").dataset.filled, s=$("#dropScene").dataset.filled, t=$("#dropTech").dataset.filled;
+  if(!d||!s||!t){setFeedback("请把设备、场景、技术都填满。","err");return;}
+  const ok=[d,s,t].every(id=>AB_ITEMS.find(x=>x.id===id).ab===state.ability);
+  const aname=ABILITIES.find(a=>a.id===state.ability).name;
+  if(ok){
+    const line=`【${aname}】${AB_ITEMS.find(x=>x.id===d).text} / ${AB_ITEMS.find(x=>x.id===s).text} / ${AB_ITEMS.find(x=>x.id===t).text}`;
+    if(!state.pairs.includes(line)) state.pairs.push(line);
+    setFeedback(`配对正确！已记录 ${state.pairs.length} 组。再完成其他能力吧。`,"ok");
+    log("能力配对成功："+line);
+    if(state.pairs.length>=3){state.done[1]=true; toast("模块2完成");}
+  }else{
+    const detail=state.params.fbDetail>=2?"请确认三项都属于同一能力。例如“看”对应摄像头、进出校识别、计算机视觉。":"三项能力不一致。";
+    setFeedback("配对不完整或不一致。<br/>"+detail,"err");
+  }
+  updateProgress(); renderAbPool();
+}
+
+/* ===== Map ===== */
+let currentMap="campus";
+function renderMap(){
+  const scene=$("#mapScene"); scene.innerHTML="";
+  const diff=state.params.mapDiff;
+  const op=diff===1?0.95:diff===2?0.75:0.45;
+  MAP_DATA[currentMap].forEach(h=>{
+    const b=document.createElement("button");
+    b.className="hotspot"+(state.mapFinds.includes(h.id)?" found":"");
+    b.style.left=h.x+"%"; b.style.top=h.y+"%"; b.style.opacity=op;
+    b.textContent=state.mapFinds.includes(h.id)?"✓":"?";
+    b.title=state.mapFinds.includes(h.id)?h.name:"点击发现";
+    b.onclick=()=>{
+      if(!state.mapFinds.includes(h.id)){
+        state.mapFinds.push(h.id);
+        state.mapRows.push({scene:currentMap, device:h.name, func:h.func, tech:h.tech});
+        log(`发现设备：${h.name}`);
+        setFeedback(`发现【${h.name}】：${h.func}（${h.tech}）`,"ok");
+        if(state.mapFinds.length>=5){state.done[2]=true; toast("模块3完成");}
+        updateProgress();
+      }
+      renderMap(); renderMapTable();
+    };
+    scene.appendChild(b);
+  });
+  // decorative labels
+  const lab=document.createElement("div");
+  lab.style.cssText="position:absolute;left:12px;bottom:10px;font-size:12px;color:#334;background:rgba(255,255,255,.7);padding:4px 8px;border-radius:8px";
+  lab.textContent={campus:"校园场景",home:"家庭场景",community:"社区场景"}[currentMap]+` · 已发现 ${state.mapFinds.length}`;
+  scene.appendChild(lab);
+}
+function renderMapTable(){
+  const tb=$("#mapTable tbody"); tb.innerHTML="";
+  state.mapRows.forEach((r,idx)=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${({campus:"校园",home:"家庭",community:"社区"})[r.scene]||r.scene}</td>
+      <td><input value="${esc(r.device)}" data-i="${idx}" data-k="device"/></td>
+      <td><input value="${esc(r.func)}" data-i="${idx}" data-k="func"/></td>
+      <td><input value="${esc(r.tech)}" data-i="${idx}" data-k="tech"/></td>
+      <td><button class="ghost" data-del="${idx}" style="padding:4px 8px;color:#334;background:#eef2ff;box-shadow:none">删</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll("input").forEach(inp=>{
+    inp.onchange=()=>{state.mapRows[+inp.dataset.i][inp.dataset.k]=inp.value; log("更新地图表格");};
+  });
+  tb.querySelectorAll("[data-del]").forEach(btn=>{
+    btn.onclick=()=>{state.mapRows.splice(+btn.dataset.del,1); renderMapTable();};
+  });
+}
+function esc(s){return String(s).replace(/"/g,"&quot;").replace(/</g,"&lt;");}
+
+/* ===== Compare ===== */
+function renderCmp(){
+  const pool=$("#cmpPool"); pool.innerHTML="";
+  const used=new Set([...state.cmp.auto,...state.cmp.ai]);
+  CMP_ITEMS.forEach(it=>{
+    if(used.has(it.id)) return;
+    pool.appendChild(makeCmpChip(it));
+  });
+  fillCmpDrop($("#dropAuto"), state.cmp.auto, "auto");
+  fillCmpDrop($("#dropAI"), state.cmp.ai, "ai");
+}
+function makeCmpChip(it){
+  const c=document.createElement("div");
+  c.className="chip"; c.draggable=true; c.dataset.id=it.id; c.textContent=it.text;
+  c.addEventListener("dragstart",e=>{e.dataTransfer.setData("text/plain",it.id); state.selectedChip=it.id;});
+  c.addEventListener("click",()=>{state.selectedChip=it.id; toast("已选中，点击左侧或右侧区域");});
+  return c;
+}
+function fillCmpDrop(el, ids, side){
+  el.innerHTML="";
+  ids.forEach(id=>{
+    const it=CMP_ITEMS.find(x=>x.id===id);
+    if(it) el.appendChild(makeCmpChip(it));
+  });
+  // rebind drop each render - clone node to clear listeners? use on* once via flag
+}
+function bindCmpDrops(){
+  [["dropAuto","auto"],["dropAI","ai"]].forEach(([id,side])=>{
+    const el=$("#"+id);
+    el.ondragover=e=>{e.preventDefault(); el.classList.add("over");};
+    el.ondragleave=()=>el.classList.remove("over");
+    el.ondrop=e=>{
+      e.preventDefault(); el.classList.remove("over");
+      placeCmp(e.dataTransfer.getData("text/plain")||state.selectedChip, side);
+    };
+    el.onclick=()=>{ if(state.selectedChip) placeCmp(state.selectedChip, side); };
+  });
+}
+function placeCmp(id, side){
+  if(!id) return;
+  state.cmp.auto=state.cmp.auto.filter(x=>x!==id);
+  state.cmp.ai=state.cmp.ai.filter(x=>x!==id);
+  state.cmp[side].push(id);
+  state.selectedChip=null;
+  renderCmp();
+  log(`分类 ${id} → ${side}`);
+}
+function checkCmp(){
+  let correct=0, total=0;
+  const strict=state.params.strictLv;
+  CMP_ITEMS.forEach(it=>{
+    const inAuto=state.cmp.auto.includes(it.id);
+    const inAI=state.cmp.ai.includes(it.id);
+    if(!inAuto&&!inAI) return;
+    total++;
+    if((it.side==="auto"&&inAuto)||(it.side==="ai"&&inAI)) correct++;
+  });
+  const need = strict===3 ? CMP_ITEMS.length : strict===2 ? 6 : 4;
+  const placed=state.cmp.auto.length+state.cmp.ai.length;
+  const pass=correct>=need && placed>=need && correct===placed;
+  state.done[3]=pass;
+  setFeedback(pass?`分类优秀！正确 ${correct}/${placed}。AI设备能感知环境并适应，自动化只执行固定规则。`:`正确 ${correct}/${placed}，需至少正确分类 ${need} 项且无错放。`+(state.params.fbDetail>=2?"<br/>想想：设备是否会根据新情况调整行为？":""), pass?"ok":"warn");
+  updateProgress();
+  if(pass) toast("模块4完成");
+  log(`比较检查 ${correct}/${placed}`);
+}
+
+/* ===== Project ===== */
+function evalProject(){
+  const checks=[
+    {name:"完成时间轴排序", ok:state.done[0], w:20},
+    {name:"至少3组能力配对", ok:state.pairs.length>=3, w:20},
+    {name:"地图发现≥5处", ok:state.mapFinds.length>=5, w:20},
+    {name:"完成自动化比较", ok:state.done[3], w:15},
+    {name:"填写调查小结", ok:($("#projNote").value||"").trim().length>=15, w:15},
+    {name:"表格记录完整", ok:state.mapRows.length>=3 && state.mapRows.every(r=>r.device&&r.func&&r.tech), w:10}
+  ];
+  let score=checks.reduce((s,c)=>s+(c.ok?c.w:0),0);
+  state.project.score=score;
+  state.project.title=$("#projTitle").value;
+  state.project.note=$("#projNote").value;
+  $("#projScore").textContent=score;
+  $("#evalList").innerHTML=checks.map(c=>`${c.ok?"✓":"○"} ${c.name}（${c.w}分）`).join("<br/>");
+  const lines=["【身边的AI应用地图】",`标题：${state.project.title}`,`评分：${score}/100`,"",
+    "一、能力配对",...state.pairs.map(p=>"· "+p),"",
+    "二、设备记录",...state.mapRows.map(r=>`· [${r.scene}] ${r.device}｜${r.func}｜${r.tech}`),"",
+    "三、小结", state.project.note||"（未填写）","",
+    "四、评价要点","· 能区分自动化与人工智能","· 理解看听说想动与技术的对应","· 调查记录完整且无真实隐私信息"];
+  $("#projPreview").textContent=lines.join("\n");
+  if(score>=70){state.done[4]=true; setFeedback("项目已生成，可作为课堂展示成果。","ok"); toast("模块5可导出");}
+  else setFeedback("项目未达70分，请完善前序模块与小结。","warn");
+  updateProgress();
+  log("生成项目评价，得分 "+score);
+}
+
+/* ===== Persist ===== */
+function serialize(){
+  return {
+    version:1, lab:"u1s1", savedAt:new Date().toISOString(),
+    state:{
+      done:state.done, tlMap:state.tlMap||{}, pairs:state.pairs,
+      mapFinds:state.mapFinds, mapRows:state.mapRows, cmp:state.cmp,
+      params:state.params, project:{title:$("#projTitle").value, note:$("#projNote").value, score:state.project.score},
+      step:state.step, logs:state.logs.slice(0,20)
+    }
+  };
+}
+function applyState(data){
+  const s=data.state||data;
+  Object.assign(state, {
+    done:s.done||state.done, tlMap:s.tlMap||{}, pairs:s.pairs||[],
+    mapFinds:s.mapFinds||[], mapRows:s.mapRows||[], cmp:s.cmp||{auto:[],ai:[]},
+    params:Object.assign(state.params, s.params||{}), project:Object.assign(state.project, s.project||{}),
+    step:s.step||0, logs:s.logs||state.logs
+  });
+  $("#projTitle").value=state.project.title||"";
+  $("#projNote").value=state.project.note||"";
+  syncParamUI();
+  renderAll();
+  goStep(state.step);
+  updateProgress();
+  log("已载入保存数据");
+}
+function saveLocal(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(serialize()));
+  toast("已保存到本机"); log("保存 localStorage");
+}
+function exportProject(){
+  const blob=new Blob([JSON.stringify(serialize(),null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="单元1_第1节_身边的AI应用地图.json";
+  a.click(); URL.revokeObjectURL(a.href);
+  toast("已导出"); log("导出项目文件");
+}
+function restoreExample(){
+  state.tlMap={};
+  TL_SLOTS.forEach(y=>{const ev=TL_EVENTS.find(e=>e.ok&&e.year===y); if(ev) state.tlMap[y]=ev.id;});
+  state.pairs=[
+    "【看】校园门禁摄像头 / 进出校识别 / 计算机视觉",
+    "【听】语音助手音箱 / 课堂语音提问 / 语音识别",
+    "【动】配送机器人 / 图书室自动送书 / 路径规划与控制"
+  ];
+  state.mapFinds=["c1","c2","h1","h2","m1"];
+  state.mapRows=[
+    {scene:"campus",device:"智能门禁",func:"识别身份放行",tech:"人脸/卡证识别"},
+    {scene:"campus",device:"语音答疑终端",func:"回答常见问题",tech:"语音识别+对话"},
+    {scene:"home",device:"智能音箱",func:"语音控制家电",tech:"语音识别"},
+    {scene:"home",device:"扫地机器人",func:"自主清扫避障",tech:"感知定位+规划"},
+    {scene:"community",device:"智慧垃圾桶",func:"辅助分类提示",tech:"物体识别"}
+  ];
+  state.cmp={auto:["a1","a2","a3","a4"], ai:["i1","i2","i3","i4"]};
+  state.done=[true,true,true,true,false];
+  $("#projNote").value="校园里门禁和答疑终端体现“看”“听”“说”；家里扫地机器人体现“动”；它们都能根据感知信息作出反应，不同于只会定时的电饭煲。";
+  renderAll(); updateProgress(); evalProject();
+  setFeedback("已恢复教材示例，可继续修改或导出。","ok");
+  toast("已恢复示例");
+}
+function syncParamUI(){
+  $("#hintLv").value=state.params.hintLv; $("#hintLvVal").textContent=state.params.hintLv;
+  $("#noiseLv").value=state.params.noiseLv; $("#noiseVal").textContent=state.params.noiseLv;
+  $("#mapDiff").value=state.params.mapDiff; $("#mapDiffVal").textContent=["","低","中","高"][state.params.mapDiff];
+  $("#strictLv").value=state.params.strictLv; $("#strictVal").textContent=["","宽松","标准","严格"][state.params.strictLv];
+  $("#spd").value=state.params.spd; $("#spdVal").textContent=["","慢","中","快"][state.params.spd];
+  $("#fbDetail").value=state.params.fbDetail; $("#fbDetailVal").textContent=["","简略","标准","详细"][state.params.fbDetail];
+}
+function renderAll(){
+  renderTimeline(); renderAbilities(); renderMap(); renderMapTable(); renderCmp(); bindCmpDrops();
+  $("#logs").textContent=state.logs.join("\n")||"系统就绪";
+}
+
+/* ===== Events ===== */
+$$(".left .step").forEach(s=>{
+  s.onclick=()=>{
+    const ds=+s.dataset.step;
+    goStep(ds===5?4:ds);
+  };
+});
+$("#btnCheckTl").onclick=checkTimeline;
+$("#btnHintTl").onclick=()=>{
+  const tips=["先找1956达特茅斯会议。","图灵机最早，生成式AI最近。","干扰项（计算器、MP3）不要放入槽位。"];
+  $("#tlHint").style.display="block";
+  $("#tlHint").textContent="提示： "+tips.slice(0, state.params.hintLv||1).join(" ");
+  setFeedback($("#tlHint").textContent,"warn");
+};
+$("#btnRetryTl").onclick=()=>{state.tlMap={}; state.done[0]=false; renderTimeline(); updateProgress(); setFeedback("已清空时间轴，请重试。");};
+$("#btnErrTl").onclick=()=>{state.tlMap={"1936":"dartmouth","1956":"turing"}; renderTimeline(); $("#tlErr").style.display="block"; setFeedback("已注入错误示例：年代错位。请纠正。","err"); log("注入时间轴错误示例");};
+
+$("#btnCheckAb").onclick=checkAbility;
+$("#btnHintAb").onclick=()=>{
+  const a=state.ability?ABILITIES.find(x=>x.id===state.ability).name:"（先选能力）";
+  setFeedback(`分层提示：当前关注【${a}】。<br/>1) 设备长什么样 2) 用在什么场景 3) 背后技术名称是否一致。`,"warn");
+};
+$("#btnRetryAb").onclick=()=>{clearAbDrops(); setFeedback("已清空当前配对区。");};
+
+$$("#mapTabs button").forEach(b=>b.onclick=()=>{
+  currentMap=b.dataset.map; $$("#mapTabs button").forEach(x=>x.classList.toggle("on",x===b)); renderMap();
+});
+$("#mapDiff").oninput=e=>{state.params.mapDiff=+e.target.value; $("#mapDiffVal").textContent=["","低","中","高"][state.params.mapDiff]; renderMap();};
+$("#btnAddRow").onclick=()=>{state.mapRows.push({scene:currentMap,device:"",func:"",tech:""}); renderMapTable();};
+$("#btnHintMap").onclick=()=>setFeedback("校园可找门禁/答疑屏；家庭可找音箱/扫地机；社区可找智慧垃圾桶。点击发光热点。","warn");
+$("#btnErrMap").onclick=()=>{
+  state.mapRows.push({scene:"home",device:"定时电饭煲",func:"智能理解菜谱并创作",tech:"深度学习"});
+  renderMapTable();
+  setFeedback("错误样例：把定时电饭煲写成AI创作——功能描述不实，请改正或删除。","err");
+};
+
+$("#btnCheckCmp").onclick=checkCmp;
+$("#btnHintCmp").onclick=()=>setFeedback("关键判断：会不会感知新情况并调整？会→AI；只会按固定程序→自动化。","warn");
+$("#btnRetryCmp").onclick=()=>{state.cmp={auto:[],ai:[]}; state.done[3]=false; renderCmp(); updateProgress();};
+$("#btnErrCmp").onclick=()=>{state.cmp={auto:["i1"],ai:["a1","a4"]}; renderCmp(); $("#cmpErr").style.display="block"; setFeedback("错误示例已加载：AI与自动化放反了。","err");};
+
+$("#btnGenProj").onclick=evalProject;
+$("#btnRefreshEval").onclick=evalProject;
+$("#btnExportProj").onclick=()=>{evalProject(); exportProject();};
+
+$("#hintLv").oninput=e=>{state.params.hintLv=+e.target.value; $("#hintLvVal").textContent=e.target.value; renderTimeline();};
+$("#noiseLv").oninput=e=>{state.params.noiseLv=+e.target.value; $("#noiseVal").textContent=e.target.value; state.tlMap={}; renderTimeline();};
+$("#strictLv").oninput=e=>{state.params.strictLv=+e.target.value; $("#strictVal").textContent=["","宽松","标准","严格"][state.params.strictLv];};
+$("#spd").oninput=e=>{state.params.spd=+e.target.value; $("#spdVal").textContent=["","慢","中","快"][state.params.spd];};
+$("#fbDetail").oninput=e=>{state.params.fbDetail=+e.target.value; $("#fbDetailVal").textContent=["","简略","标准","详细"][state.params.fbDetail];};
+
+$("#btnSave").onclick=saveLocal;
+$("#btnExport").onclick=exportProject;
+$("#btnImport").onclick=()=>$("#importFile").click();
+$("#importFile").onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{try{applyState(JSON.parse(r.result)); toast("导入成功");}catch(err){toast("导入失败"); setFeedback("文件格式无效","err");}};
+  r.readAsText(f);
+};
+$("#btnFull").onclick=()=>{if(!document.fullscreenElement) document.documentElement.requestFullscreen(); else document.exitFullscreen();};
+$("#btnReset").onclick=()=>{
+  if(!confirm("确定重置本课全部进度？")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  location.reload();
+};
+$("#btnHelp").onclick=()=>$("#helpModal").classList.add("show");
+$("#closeHelp").onclick=()=>$("#helpModal").classList.remove("show");
+$("#btnRestoreEx").onclick=restoreExample;
+$("#btnViewSave").onclick=()=>{
+  const raw=localStorage.getItem(STORAGE_KEY);
+  setFeedback(raw?`<pre style="white-space:pre-wrap;font-size:11px;max-height:200px;overflow:auto">${esc(raw).slice(0,1200)}</pre>`:"本机暂无保存。","warn");
+};
+$("#btnClearSave").onclick=()=>{localStorage.removeItem(STORAGE_KEY); toast("已清除本机数据"); log("清除 localStorage");};
+
+// init
+state.tlMap={};
+try{
+  const raw=localStorage.getItem(STORAGE_KEY);
+  if(raw){applyState(JSON.parse(raw)); toast("已恢复上次进度");}
+  else {renderAll(); updateProgress();}
+}catch(e){renderAll(); updateProgress();}
+bindCmpDrops();
+log("实验室启动 · 离线模式");
+})();
+</script>
+</body>
+</html>

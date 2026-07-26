@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>单元2·第5节 · 智能垃圾分类｜人工智能创作与机器感知互动实验室</title>
+<style>
+:root{
+  --ocean-deep:#071e32;--ocean:#0a2540;--ocean-mid:#0d3b66;--teal:#1a8a8a;--teal-bright:#2bb5b5;
+  --orange:#f0a020;--orange-warn:#e67e22;--panel:#0f2d4a;--panel2:#133556;--text:#e8f4f8;
+  --muted:#8ab4c8;--line:rgba(43,181,181,.35);--ok:#3dcc8c;--bad:#e85d5d;--radius:12px;
+  --rec:#2bb5b5;--haz:#e67e22;--kit:#c0392b;--oth:#7f8c9a;
+  --font:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC","Source Han Sans SC",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;font-family:var(--font);background:var(--ocean-deep);color:var(--text)}
+body{background:
+  radial-gradient(ellipse 80% 50% at 12% -10%,rgba(26,138,138,.28),transparent 55%),
+  radial-gradient(ellipse 55% 40% at 92% 0%,rgba(240,160,32,.12),transparent 50%),
+  linear-gradient(180deg,#061828 0%,var(--ocean-deep) 40%,#0a2a44 100%)}
+.topbar{position:sticky;top:0;z-index:50;display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:10px 14px;background:rgba(7,30,50,.92);border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+.brand{display:flex;align-items:center;gap:10px;margin-right:auto}
+.brand-mark{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--teal),var(--ocean-mid));display:grid;place-items:center}
+.brand h1{font-size:15px;font-weight:700}.brand p{font-size:11px;color:var(--muted)}
+.nav-btn{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:7px 11px;border-radius:8px;font:inherit;font-size:12px;cursor:pointer}
+.nav-btn:hover{border-color:var(--teal-bright)}
+.nav-btn.primary{background:linear-gradient(135deg,var(--teal),#147070);border-color:transparent}
+.nav-btn.warn{border-color:rgba(240,160,32,.5);color:var(--orange)}
+.wrap{max-width:1180px;margin:0 auto;padding:18px 14px 48px}
+.hero{padding:18px 0 10px}
+.hero .tag{display:inline-block;font-size:11px;color:var(--orange);border:1px solid rgba(240,160,32,.45);padding:3px 10px;border-radius:999px;margin-bottom:8px}
+.hero h2{font-size:clamp(22px,3vw,30px);margin-bottom:6px}
+.hero p{color:var(--muted);font-size:14px;max-width:760px;line-height:1.6}
+.privacy{font-size:11px;color:var(--orange);margin-top:8px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 14px;padding:6px;background:rgba(15,45,74,.65);border:1px solid var(--line);border-radius:14px}
+.tab{flex:1;min-width:110px;padding:10px 8px;border:0;border-radius:10px;background:transparent;color:var(--muted);font:inherit;font-size:13px;cursor:pointer}
+.tab.active{background:linear-gradient(135deg,rgba(26,138,138,.55),rgba(13,59,102,.8));color:#fff}
+.panel{display:none;animation:fade .25s ease}.panel.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.grid{display:grid;gap:14px}.grid-2{grid-template-columns:1.1fr .9fr}
+@media(max-width:860px){.grid-2{grid-template-columns:1fr}}
+.card{background:linear-gradient(160deg,rgba(15,45,74,.95),rgba(10,37,64,.92));border:1px solid var(--line);border-radius:var(--radius);padding:16px}
+.card h3{font-size:16px;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+.card h3 .n{width:22px;height:22px;border-radius:6px;background:var(--orange);color:#1a1200;font-size:12px;display:grid;place-items:center;font-weight:800}
+.card .desc{font-size:13px;color:var(--muted);line-height:1.55;margin-bottom:12px}
+.btn{border:0;border-radius:8px;padding:9px 14px;font:inherit;font-size:13px;cursor:pointer;background:linear-gradient(135deg,var(--teal),#147070);color:#fff}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text)}
+.btn.orange{background:linear-gradient(135deg,var(--orange),var(--orange-warn));color:#1a1200;font-weight:700}
+.btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.feedback{margin-top:12px;padding:12px;border-radius:10px;background:rgba(26,138,138,.12);border:1px solid var(--line);font-size:13px;line-height:1.6;min-height:48px}
+.feedback.bad{background:rgba(232,93,93,.12);border-color:rgba(232,93,93,.35)}
+.feedback.ok{background:rgba(61,204,140,.12);border-color:rgba(61,204,140,.35)}
+.hint{font-size:12px;color:var(--orange);margin-top:8px}
+.items{display:flex;flex-wrap:wrap;gap:8px;min-height:70px;padding:10px;border:1px dashed var(--line);border-radius:10px;background:rgba(7,30,50,.4)}
+.item{padding:8px 10px;border-radius:8px;background:var(--panel2);border:1px solid var(--line);font-size:12px;cursor:grab;user-select:none;display:flex;align-items:center;gap:6px}
+.item.dragging{opacity:.45}
+.bins{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+@media(max-width:720px){.bins{grid-template-columns:1fr 1fr}}
+.bin{min-height:120px;border-radius:10px;border:2px dashed transparent;padding:8px;background:rgba(7,30,50,.45)}
+.bin h4{font-size:12px;margin-bottom:6px;text-align:center}
+.bin.rec{border-color:rgba(43,181,181,.55)}.bin.haz{border-color:rgba(230,126,34,.55)}
+.bin.kit{border-color:rgba(192,57,43,.55)}.bin.oth{border-color:rgba(127,140,154,.55)}
+.bin.over{background:rgba(43,181,181,.15)}
+.bin .drop{min-height:70px}
+.tag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;background:rgba(255,255,255,.08)}
+.sliders{display:grid;gap:10px}
+.slider-row label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px}
+.slider-row input[type=range]{width:100%;accent-color:var(--teal-bright)}
+.meter{height:12px;background:rgba(7,30,50,.7);border-radius:999px;overflow:hidden;margin:8px 0}
+.meter i{display:block;height:100%;background:linear-gradient(90deg,var(--teal),var(--orange))}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:640px){.compare{grid-template-columns:1fr}}
+.metric{background:rgba(7,30,50,.55);border-radius:8px;padding:12px;border:1px solid var(--line)}
+.metric b{display:block;font-size:22px;color:var(--teal-bright);margin:4px 0}
+.metric span{font-size:12px;color:var(--muted)}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0}
+.flow .step{padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:rgba(7,30,50,.5);font-size:13px;cursor:pointer}
+.flow .step.on{border-color:var(--teal-bright);background:rgba(26,138,138,.25)}
+.flow .step.done{border-color:var(--ok);color:var(--ok)}
+.flow .arr{color:var(--muted)}
+.report{white-space:pre-wrap;font-size:13px;line-height:1.65;background:rgba(7,30,50,.55);border-radius:10px;padding:14px;border:1px solid var(--line);max-height:360px;overflow:auto}
+.log{font-size:12px;color:var(--muted);max-height:140px;overflow:auto}
+.log div{padding:3px 0;border-bottom:1px dashed rgba(138,180,200,.2)}
+textarea,input[type=text]{width:100%;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);font:inherit}
+.modal-mask{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:100;padding:16px}
+.modal-mask.show{display:flex}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;max-width:560px;width:100%;padding:18px;max-height:85vh;overflow:auto}
+.modal h3{margin-bottom:8px}.modal li{font-size:13px;color:var(--muted);line-height:1.6;margin:4px 0}
+.modal ul{padding-left:18px;margin:8px 0}
+.toast{position:fixed;right:16px;bottom:16px;background:var(--panel2);border:1px solid var(--teal-bright);color:#fff;padding:10px 14px;border-radius:10px;font-size:13px;z-index:120;opacity:0;transform:translateY(8px);transition:.2s;pointer-events:none}
+.toast.show{opacity:1;transform:none}
+footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);text-align:center}
+.legend{display:flex;flex-wrap:wrap;gap:8px;font-size:11px;color:var(--muted);margin-bottom:8px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark" aria-hidden="true">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="4" y="8" width="16" height="12" rx="2" stroke="#2bb5b5" stroke-width="1.5"/><path d="M8 8V6a4 4 0 0 1 8 0v2" stroke="#f0a020" stroke-width="1.5"/><path d="M9 13h6M12 13v5" stroke="#e8f4f8" stroke-width="1.4" stroke-linecap="round"/></svg>
+    </div>
+    <div>
+      <h1>智能垃圾分类 · 训练场与垃圾桶设计器</h1>
+      <p>单元2 第5节 · P62-68 · 合成物品 · 离线仿真</p>
+    </div>
+  </div>
+  <button class="nav-btn primary" id="btnSave">保存</button>
+  <button class="nav-btn" id="btnExport">导出</button>
+  <button class="nav-btn" id="btnImport">导入</button>
+  <button class="nav-btn" id="btnFS">全屏</button>
+  <button class="nav-btn warn" id="btnReset">重置</button>
+  <button class="nav-btn" id="btnHelp">帮助</button>
+  <input type="file" id="importFile" accept="application/json,.json" hidden/>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <span class="tag">机器感知 · 智能垃圾分类</span>
+    <h2>分类训练场 + 人机协作比较 + 智能垃圾桶设计器</h2>
+    <p>按形状/材质/颜色/可回收性为内置物品分类；对比人类与 AI；调节训练样本、类别均衡、背景与遮挡观察准确率；设计“识别—判断—开盖—投放—记录”流程并导出结构说明与协作价值陈述。</p>
+    <p class="privacy">声明：物品为教学合成图标与虚拟属性，不涉及真实垃圾图像上传或个人隐私数据。</p>
+  </section>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="m1">① 分类训练场</button>
+    <button class="tab" data-tab="m2">② 人机比较</button>
+    <button class="tab" data-tab="m3">③ 训练条件</button>
+    <button class="tab" data-tab="m4">④ 垃圾桶设计</button>
+    <button class="tab" data-tab="m5">⑤ 导出成果</button>
+  </nav>
+
+  <section class="panel active" id="m1">
+    <div class="card">
+      <h3><span class="n">1</span>拖拽 / 点击分类</h3>
+      <p class="desc">将物品拖入四类垃圾桶，或先点选物品再点桶。观察形状、材质、颜色与可回收性提示。</p>
+      <div class="legend">
+        <span><i style="background:var(--rec)"></i>可回收物</span>
+        <span><i style="background:var(--haz)"></i>有害垃圾</span>
+        <span><i style="background:var(--kit)"></i>厨余垃圾</span>
+        <span><i style="background:var(--oth)"></i>其他垃圾</span>
+      </div>
+      <div class="items" id="itemPool"></div>
+      <div class="bins" id="bins"></div>
+      <div class="btn-row">
+        <button class="btn" id="btnCheckSort">检验分类</button>
+        <button class="btn ghost" id="btnShuffleItems">打乱重来</button>
+        <button class="btn ghost" id="btnAutoHint">显示属性提示</button>
+      </div>
+      <div class="feedback" id="sortFeedback">把所有物品放入对应类别后检验。</div>
+      <p class="hint" id="sortHint"></p>
+    </div>
+  </section>
+
+  <section class="panel" id="m2">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="n">2</span>人类分类 vs AI 分类</h3>
+        <p class="desc">对当前题目集，分别记录你的正确率与 AI 仿真结果，分析差异原因。</p>
+        <div class="btn-row" style="margin-top:0">
+          <button class="btn" id="btnUseHuman">用训练场成绩作为人类结果</button>
+          <button class="btn orange" id="btnRunAISort">运行 AI 仿真分类</button>
+        </div>
+        <div class="compare" style="margin-top:12px">
+          <div class="metric"><span>人类正确率</span><b id="mHuman">—</b></div>
+          <div class="metric"><span>AI 正确率</span><b id="mAI">—</b></div>
+        </div>
+        <div class="feedback" id="cmpFeedback">完成训练场检验后同步人类成绩，再运行 AI。</div>
+      </div>
+      <div class="card">
+        <h3>差异分析</h3>
+        <div class="log" id="diffLog"></div>
+        <p class="hint" id="cmpHint">AI 易在“污染纸箱/餐盒材质混淆”上出错；人类可能在有害垃圾细节规则上更谨慎。</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="m3">
+    <div class="grid grid-2">
+      <div class="card">
+        <h3><span class="n">3</span>训练条件滑块</h3>
+        <p class="desc">调节训练样本数量、类别均衡、背景复杂度与遮挡，观察规则仿真准确率曲线解释。</p>
+        <div class="sliders" id="trainSliders"></div>
+        <div class="btn-row">
+          <button class="btn" id="btnEvalTrain">评估模型准确率</button>
+          <button class="btn ghost" id="btnBalanced">一键均衡优质集</button>
+        </div>
+      </div>
+      <div class="card">
+        <h3>准确率仿真</h3>
+        <div style="font-size:13px;color:var(--muted)">估计 Top-1 准确率</div>
+        <div class="meter"><i id="accBar" style="width:0%"></i></div>
+        <div style="font-size:28px;font-weight:800;color:var(--teal-bright)" id="accNum">—</div>
+        <div class="feedback" id="trainFeedback">调节参数后评估。</div>
+        <p class="hint" id="trainHint"></p>
+        <svg id="accSvg" width="100%" height="120" viewBox="0 0 320 120" style="margin-top:8px"></svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="m4">
+    <div class="card">
+      <h3><span class="n">4</span>智能垃圾桶工作流设计器</h3>
+      <p class="desc">按顺序点亮流程节点，编辑每步规则，并模拟一次投放。</p>
+      <div class="flow" id="flowUI"></div>
+      <div class="grid grid-2" style="margin-top:8px">
+        <div>
+          <label style="font-size:12px;color:var(--muted)">当前步骤说明 / 规则</label>
+          <textarea id="stepRule" rows="5" style="margin-top:6px" placeholder="编写该步的判定或动作规则…"></textarea>
+          <div class="btn-row">
+            <button class="btn" id="btnSaveStep">保存本步规则</button>
+            <button class="btn ghost" id="btnSimFlow">模拟投放</button>
+            <button class="btn ghost" id="btnFlowReset">重置流程进度</button>
+          </div>
+        </div>
+        <div>
+          <div class="illu-bin" id="binStage" style="min-height:200px;border-radius:10px;border:1px dashed var(--line);background:rgba(7,30,50,.5);display:flex;align-items:center;justify-content:center"></div>
+          <div class="feedback" id="flowFeedback">点击流程节点开始设计。</div>
+          <div class="log" id="flowLog"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel" id="m5">
+    <div class="card">
+      <h3><span class="n">5</span>导出：结构图说明 · 规则 · 测试日志 · 协作价值</h3>
+      <p class="desc">汇总分类成绩、训练条件、垃圾桶流程与人机协作价值陈述，导出文本与 JSON。</p>
+      <label style="font-size:12px;color:var(--muted)">人机协作价值陈述（可编辑）</label>
+      <textarea id="valueStmt" rows="4" style="margin-top:6px">智能分类提升效率与一致性，人类负责规则制定、异常复核与伦理把关；二者协作可降低污染投放与有害误投风险。</textarea>
+      <div class="btn-row">
+        <button class="btn orange" id="btnGenExport">生成并导出全部成果</button>
+        <button class="btn ghost" id="btnPreviewExport">仅预览</button>
+      </div>
+      <div class="report" id="finalReport" style="margin-top:12px">预览将显示在这里。</div>
+    </div>
+  </section>
+  <footer>山东教育出版社《人工智能通识·第一册》· 单元2 第5节 · 离线互动实验</footer>
+</main>
+
+<div class="modal-mask" id="helpModal">
+  <div class="modal">
+    <h3>使用帮助</h3>
+    <ul>
+      <li>分类可用拖拽或“点物品再点桶”。检验后可与 AI 仿真对比。</li>
+      <li>训练滑块演示数据量、均衡与成像条件对准确率的影响（规则仿真）。</li>
+      <li>设计器按 识别→判断→开盖→投放→记录 编写规则并模拟。</li>
+      <li>保存/导出/导入支持 localStorage 与 JSON 文件。</li>
+    </ul>
+    <div class="btn-row"><button class="btn" id="helpClose">知道了</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+const KEY='lab_u2_s5_trash_v1';
+const CATS=[
+  {id:'rec',name:'可回收物',cls:'rec'},
+  {id:'haz',name:'有害垃圾',cls:'haz'},
+  {id:'kit',name:'厨余垃圾',cls:'kit'},
+  {id:'oth',name:'其他垃圾',cls:'oth'}
+];
+const ITEMS=[
+  {id:'box',name:'纸箱',cat:'rec',shape:'方形中空',material:'纸',color:'棕',recycle:'可回收',icon:'📦'},
+  {id:'bottle',name:'塑料瓶',cat:'rec',shape:'瓶状',material:'PET塑料',color:'透明',recycle:'可回收',icon:'🧴'},
+  {id:'can',name:'易拉罐',cat:'rec',shape:'圆柱',material:'铝',color:'银',recycle:'可回收',icon:'🥫'},
+  {id:'battery',name:'废电池',cat:'haz',shape:'小柱/纽扣',material:'金属化学',color:'多色',recycle:'有害',icon:'🔋'},
+  {id:'bulb',name:'废灯管',cat:'haz',shape:'细长管',material:'玻璃汞',color:'白',recycle:'有害',icon:'💡'},
+  {id:'peel',name:'果皮',cat:'kit',shape:'不规则',material:'有机',color:'黄绿',recycle:'厨余',icon:'🍌'},
+  {id:'leftover',name:'餐厨剩饭',cat:'kit',shape:'团状',material:'有机含水',color:'杂色',recycle:'厨余',icon:'🍱'},
+  {id:'bag',name:'污染塑料袋',cat:'oth',shape:'薄膜',material:'塑料(污染)',color:'半透',recycle:'其他',icon:'🛍️'},
+  {id:'tissue',name:'用过纸巾',cat:'oth',shape:'片状',material:'纸(污染)',color:'白',recycle:'其他',icon:'🧻'},
+  {id:'ceramic',name:'碎陶瓷杯',cat:'oth',shape:'碎片',material:'陶瓷',color:'白',recycle:'其他',icon:'☕'}
+];
+const FLOW=[
+  {id:'recognize',name:'识别',def:'摄像头采集物品图像，模型输出类别与置信度；低于阈值则请求人工确认。'},
+  {id:'decide',name:'判断',def:'结合类别映射开盖策略；有害垃圾额外语音提示与延时确认。'},
+  {id:'open',name:'开盖',def:'驱动对应桶盖电机打开，超时未投放则自动关闭。'},
+  {id:'drop',name:'投放',def:'重量/红外检测投放完成；异常重量触发重识别。'},
+  {id:'log',name:'记录',def:'写入本地日志：时间、类别、置信度、是否人工介入（不含个人身份）。'}
+];
+
+const state={
+  placements:{}, selectedItem:null, showHint:false,
+  humanAcc:null, aiAcc:null, diffs:[],
+  train:{samples:200,balance:70,bg:30,occlusion:15},
+  accHistory:[],
+  flowIdx:0, rules:{}, flowLogs:[],
+  sortScore:null, valueStmt:'',
+  report:''
+};
+
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1800);}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function load(){try{const d=JSON.parse(localStorage.getItem(KEY)||'null');if(d)Object.assign(state,d);}catch(e){}}
+
+let dragId=null;
+function placedIds(){return new Set(Object.keys(state.placements));}
+function renderSort(){
+  const placed=placedIds();
+  const pool=document.getElementById('itemPool');
+  const free=ITEMS.filter(it=>!placed.has(it.id));
+  pool.innerHTML=free.map(it=>itemHTML(it)).join('')||'<span style="font-size:12px;color:var(--muted)">物品已全部分配，可检验或打乱重来</span>';
+  const bins=document.getElementById('bins');
+  bins.innerHTML=CATS.map(c=>`<div class="bin ${c.cls}" data-cat="${c.id}"><h4>${c.name}</h4><div class="drop" data-cat="${c.id}">${
+    ITEMS.filter(it=>state.placements[it.id]===c.id).map(it=>itemHTML(it)).join('')
+  }</div></div>`).join('');
+  bindItems(pool);
+  bins.querySelectorAll('.bin').forEach(bin=>{
+    bindItems(bin);
+    bin.ondragover=e=>{e.preventDefault();bin.classList.add('over');};
+    bin.ondragleave=()=>bin.classList.remove('over');
+    bin.ondrop=e=>{
+      e.preventDefault();bin.classList.remove('over');
+      const id=dragId||e.dataTransfer.getData('text/plain');
+      if(!id)return;
+      state.placements[id]=bin.dataset.cat;
+      state.selectedItem=null;
+      renderSort();persist();
+    };
+    bin.onclick=e=>{
+      if(e.target.closest('.item'))return;
+      if(!state.selectedItem)return;
+      state.placements[state.selectedItem]=bin.dataset.cat;
+      state.selectedItem=null;
+      renderSort();persist();
+    };
+  });
+}
+function itemHTML(it){
+  const hint=state.showHint?`<span class="tag">${it.material}</span>`:'';
+  const sel=state.selectedItem===it.id?'outline:2px solid var(--orange);':'';
+  return `<div class="item" draggable="true" data-id="${it.id}" style="${sel}">${it.icon} ${it.name} ${hint}</div>`;
+}
+function bindItems(root){
+  root.querySelectorAll('.item').forEach(el=>{
+    el.ondragstart=e=>{dragId=el.dataset.id;el.classList.add('dragging');e.dataTransfer.setData('text/plain',el.dataset.id);};
+    el.ondragend=()=>{el.classList.remove('dragging');dragId=null;};
+    el.onclick=e=>{
+      e.stopPropagation();
+      state.selectedItem=el.dataset.id;
+      // if already placed and click again, return to pool
+      if(state.placements[el.dataset.id] && e.detail===2){
+        delete state.placements[el.dataset.id];
+      }
+      renderSort();
+    };
+  });
+  // allow drop back to pool
+  if(root.id==='itemPool'){
+    root.ondragover=e=>e.preventDefault();
+    root.ondrop=e=>{
+      e.preventDefault();
+      const id=dragId||e.dataTransfer.getData('text/plain');
+      if(id){delete state.placements[id];renderSort();persist();}
+    };
+  }
+}
+function checkSort(){
+  const ids=ITEMS.map(i=>i.id);
+  if(ids.some(id=>!state.placements[id])){
+    document.getElementById('sortFeedback').className='feedback bad';
+    document.getElementById('sortFeedback').textContent='还有物品未分类，请全部分配后再检验。';
+    document.getElementById('sortHint').textContent='提示：污染纸巾/塑料袋通常不是可回收；废电池属于有害。';
+    return;
+  }
+  let ok=0;const wrong=[];
+  ITEMS.forEach(it=>{
+    if(state.placements[it.id]===it.cat)ok++;
+    else wrong.push(`${it.name}→应归「${CATS.find(c=>c.id===it.cat).name}」`);
+  });
+  const acc=Math.round(ok/ITEMS.length*100);
+  state.sortScore=acc;state.humanAcc=acc;
+  document.getElementById('mHuman').textContent=acc+'%';
+  const fb=document.getElementById('sortFeedback');
+  if(ok===ITEMS.length){
+    fb.className='feedback ok';fb.textContent=`全部分类正确！正确率 ${acc}%。`;
+    document.getElementById('sortHint').textContent='';
+  }else{
+    fb.className='feedback bad';fb.textContent=`正确 ${ok}/${ITEMS.length}（${acc}%）。错误：${wrong.join('；')}`;
+    document.getElementById('sortHint').textContent='重试建议：先看材质是否可回收，再排除有害与厨余，剩余归其他。';
+  }
+  persist();
+}
+
+function runAISort(){
+  // AI confuses polluted paper/plastic sometimes
+  let ok=0;const diffs=[];
+  ITEMS.forEach(it=>{
+    let pred=it.cat;
+    if(it.id==='tissue'&&Math.random()<0.45){pred='rec';diffs.push('AI 将“用过纸巾”误判为可回收（污染纸张规则不足）');}
+    else if(it.id==='bag'&&Math.random()<0.35){pred='rec';diffs.push('AI 将“污染塑料袋”误判为可回收');}
+    else if(it.id==='box'&&Math.random()<0.15){pred='oth';diffs.push('AI 将油污纸箱误判为其他');}
+    else if(Math.random()<0.08){pred=CATS[Math.floor(Math.random()*4)].id;diffs.push(`AI 对「${it.name}」产生随机混淆`);}
+    if(pred===it.cat)ok++;
+    else if(!diffs.find(d=>d.includes(it.name)))diffs.push(`AI：${it.name}→${CATS.find(c=>c.id===pred).name}（真值 ${CATS.find(c=>c.id===it.cat).name}）`);
+  });
+  const acc=Math.round(ok/ITEMS.length*100);
+  state.aiAcc=acc;state.diffs=diffs.slice(0,8);
+  document.getElementById('mAI').textContent=acc+'%';
+  document.getElementById('diffLog').innerHTML=state.diffs.map(d=>`<div>${d}</div>`).join('')||'<div>本次 AI 无显著误判差异</div>';
+  const fb=document.getElementById('cmpFeedback');
+  fb.className='feedback ok';
+  const h=state.humanAcc;
+  fb.textContent=h==null
+    ?`AI 仿真正确率 ${acc}%。建议先同步人类训练场成绩再比较。`
+    :`人类 ${h}% vs AI ${acc}%。${h>=acc?'人类在规则细节上更稳，AI 更快但需复核污染样本。':'AI 整体更高，但差异条目显示污染/边界样本仍需人机协作。'}`;
+  persist();
+}
+
+function renderTrainSliders(){
+  const conf=[['samples','训练样本数量',50,2000],['balance','类别均衡度',0,100],['bg','背景复杂度',0,100],['occlusion','遮挡程度',0,100]];
+  const box=document.getElementById('trainSliders');
+  box.innerHTML=conf.map(([k,l,a,b])=>`<div class="slider-row"><label><span>${l}</span><span id="tv_${k}">${state.train[k]}</span></label>
+    <input type="range" min="${a}" max="${b}" value="${state.train[k]}" data-k="${k}"/></div>`).join('');
+  box.querySelectorAll('input').forEach(inp=>{
+    inp.oninput=()=>{state.train[inp.dataset.k]=+inp.value;document.getElementById('tv_'+inp.dataset.k).textContent=inp.value;persist();};
+  });
+}
+function estimateAcc(){
+  const {samples,balance,bg,occlusion}=state.train;
+  let acc=0.55;
+  acc+=Math.min(0.28,Math.log10(samples)/4*0.35);
+  acc+=balance/100*0.12;
+  acc-=bg/100*0.18;
+  acc-=occlusion/100*0.22;
+  if(samples<120)acc-=0.08;
+  if(balance<35)acc-=0.1;
+  return Math.max(0.2,Math.min(0.97,acc));
+}
+function evalTrain(){
+  const acc=estimateAcc();
+  const pct=Math.round(acc*100);
+  document.getElementById('accBar').style.width=pct+'%';
+  document.getElementById('accNum').textContent=pct+'%';
+  state.accHistory.push(pct);if(state.accHistory.length>12)state.accHistory.shift();
+  drawAccChart();
+  const reasons=[];
+  if(state.train.samples<200)reasons.push('样本偏少，稀有类欠拟合');
+  if(state.train.balance<50)reasons.push('类别不均衡导致多数类主导');
+  if(state.train.bg>55)reasons.push('复杂背景干扰轮廓特征');
+  if(state.train.occlusion>40)reasons.push('遮挡导致材质纹理缺失');
+  if(!reasons.length)reasons.push('数据规模与成像条件较理想，残差来自类间相似');
+  document.getElementById('trainFeedback').className='feedback ok';
+  document.getElementById('trainFeedback').textContent=`估计准确率 ${pct}%。${reasons.join('；')}。`;
+  document.getElementById('trainHint').textContent=pct<75?'改进：增加样本并做类别均衡，控制背景与遮挡。':'可进一步用难例挖掘提升边界样本。';
+  persist();
+}
+function drawAccChart(){
+  const data=state.accHistory;const svg=document.getElementById('accSvg');
+  if(!data.length){svg.innerHTML='';return;}
+  const w=320,h=120,p=10;
+  const pts=data.map((v,i)=>{
+    const x=p+i*((w-2*p)/Math.max(1,data.length-1));
+    const y=h-p-(v/100)*(h-2*p);
+    return `${x},${y}`;
+  }).join(' ');
+  svg.innerHTML=`<polyline fill="none" stroke="#2bb5b5" stroke-width="2" points="${pts}"/>
+    <polyline fill="none" stroke="#f0a020" stroke-width="1" stroke-dasharray="4 3" points="${p},${h-p-0.75*(h-2*p)} ${w-p},${h-p-0.75*(h-2*p)}"/>
+    <text x="${w-p}" y="14" text-anchor="end" fill="#8ab4c8" font-size="10">历史评估</text>`;
+}
+
+function renderFlow(){
+  document.getElementById('flowUI').innerHTML=FLOW.map((f,i)=>`<div class="step ${i===state.flowIdx?'on':''} ${i<state.flowIdx?'done':''}" data-i="${i}">${i+1}. ${f.name}</div>${i<FLOW.length-1?'<span class="arr">→</span>':''}`).join('');
+  document.getElementById('flowUI').querySelectorAll('.step').forEach(el=>{
+    el.onclick=()=>{
+      state.flowIdx=+el.dataset.i;
+      const f=FLOW[state.flowIdx];
+      document.getElementById('stepRule').value=state.rules[f.id]||f.def;
+      renderFlow();drawBinStage();persist();
+    };
+  });
+  const f=FLOW[state.flowIdx];
+  document.getElementById('stepRule').value=state.rules[f.id]||f.def;
+  drawBinStage();
+}
+function drawBinStage(){
+  const f=FLOW[state.flowIdx];
+  const open=f.id==='open'||f.id==='drop';
+  document.getElementById('binStage').innerHTML=`<svg width="260" height="180" viewBox="0 0 260 180">
+    <rect width="260" height="180" rx="12" fill="#0a2540"/>
+    <rect x="70" y="70" width="120" height="90" rx="8" fill="#1a8a8a"/>
+    <rect x="70" y="${open?40:62}" width="120" height="18" rx="4" fill="#f0a020" transform="${open?'rotate(-28 70 70)':''}"/>
+    <circle cx="130" cy="50" r="10" fill="#2bb5b5" opacity="${f.id==='recognize'?1:.35}"/>
+    <text x="130" y="30" text-anchor="middle" fill="#8ab4c8" font-size="12">步骤：${f.name}</text>
+    <text x="130" y="175" text-anchor="middle" fill="#8ab4c8" font-size="10">智能垃圾桶结构示意（教学）</text>
+  </svg>`;
+}
+function saveStep(){
+  const f=FLOW[state.flowIdx];
+  state.rules[f.id]=document.getElementById('stepRule').value.trim()||f.def;
+  document.getElementById('flowFeedback').className='feedback ok';
+  document.getElementById('flowFeedback').textContent=`已保存「${f.name}」规则。`;
+  persist();toast('规则已保存');
+}
+function simFlow(){
+  state.flowLogs=[];
+  const sample=ITEMS[Math.floor(Math.random()*ITEMS.length)];
+  FLOW.forEach((f,i)=>{
+    const rule=state.rules[f.id]||f.def;
+    let line=`${i+1}.${f.name}｜物品 ${sample.name}｜`;
+    if(f.id==='recognize')line+=`预测 ${CATS.find(c=>c.id===sample.cat).name} 置信度 0.${80+Math.floor(Math.random()*15)}`;
+    if(f.id==='decide')line+=`映射开盖 → ${sample.cat}`;
+    if(f.id==='open')line+=`打开 ${CATS.find(c=>c.id===sample.cat).name} 桶盖`;
+    if(f.id==='drop')line+=`检测到投放完成`;
+    if(f.id==='log')line+=`写入日志（匿名）`;
+    line+=`｜规则摘要：${rule.slice(0,28)}…`;
+    state.flowLogs.push(line);
+  });
+  state.flowIdx=FLOW.length-1;
+  renderFlow();
+  document.getElementById('flowLog').innerHTML=state.flowLogs.map(x=>`<div>${x}</div>`).join('');
+  document.getElementById('flowFeedback').className='feedback ok';
+  document.getElementById('flowFeedback').textContent=`模拟完成：虚拟物品「${sample.name}」走完五步流程。`;
+  persist();
+}
+
+function genExport(download){
+  const stmt=document.getElementById('valueStmt').value.trim();
+  state.valueStmt=stmt;
+  const lines=[
+    '《智能垃圾分类实验成果》',
+    '教材：山东教育出版社《人工智能通识·第一册》单元2第5节',
+    '',
+    '一、结构图说明（智能垃圾桶）',
+    '识别 → 判断 → 开盖 → 投放 → 记录',
+    ...FLOW.map((f,i)=>`${i+1}. ${f.name}：${state.rules[f.id]||f.def}`),
+    '',
+    '二、分类规则要点',
+    '· 可回收：清洁纸箱、塑料瓶、易拉罐等；',
+    '· 有害：废电池、废灯管等；',
+    '· 厨余：果皮、餐厨有机；',
+    '· 其他：污染纸巾/塑料袋、陶瓷碎片等。',
+    '',
+    '三、测试日志',
+    state.sortScore!=null?`· 人类训练场正确率：${state.sortScore}%`:'· 人类训练场：未检验',
+    state.aiAcc!=null?`· AI 仿真正确率：${state.aiAcc}%`:'· AI 仿真：未运行',
+    ...(state.diffs.length?state.diffs.map(d=>'· 差异：'+d):['· 无差异记录']),
+    ...(state.flowLogs.length?['· 流程模拟：',...state.flowLogs.map(x=>'  '+x)]:['· 流程模拟：未运行']),
+    `· 最近训练评估准确率：${state.accHistory.slice(-1)[0]??'—'}%`,
+    `· 训练参数：样本${state.train.samples}，均衡${state.train.balance}，背景${state.train.bg}，遮挡${state.train.occlusion}`,
+    '',
+    '四、人机协作价值陈述',
+    stmt,
+    '',
+    `生成时间：${new Date().toLocaleString('zh-CN')}`
+  ];
+  state.report=lines.join('\n');
+  document.getElementById('finalReport').textContent=state.report;
+  persist();
+  if(download){
+    const blob=new Blob([state.report],{type:'text/plain;charset=utf-8'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='智能垃圾分类_成果导出.txt';a.click();URL.revokeObjectURL(a.href);
+    const j=new Blob([JSON.stringify({meta:{lab:KEY},state},null,2)],{type:'application/json'});
+    const a2=document.createElement('a');a2.href=URL.createObjectURL(j);a2.download='单元2_第5节_智能垃圾分类_进度.json';a2.click();URL.revokeObjectURL(a2.href);
+    toast('已导出文本与 JSON');
+  }else toast('预览已更新');
+}
+
+function bind(){
+  document.querySelectorAll('.tab').forEach(tab=>{
+    tab.onclick=()=>{
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+      tab.classList.add('active');document.getElementById(tab.dataset.tab).classList.add('active');
+    };
+  });
+  document.getElementById('btnSave').onclick=()=>{persist();toast('已保存');};
+  document.getElementById('btnExport').onclick=()=>{
+    const blob=new Blob([JSON.stringify({meta:{lab:KEY},state},null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='单元2_第5节_智能垃圾分类_进度.json';a.click();URL.revokeObjectURL(a.href);
+  };
+  document.getElementById('btnImport').onclick=()=>document.getElementById('importFile').click();
+  document.getElementById('importFile').onchange=e=>{
+    const f=e.target.files[0];if(!f)return;const r=new FileReader();
+    r.onload=()=>{try{const d=JSON.parse(r.result);Object.assign(state,d.state||d);persist();location.reload();}catch(err){toast('导入失败');}};
+    r.readAsText(f);
+  };
+  document.getElementById('btnFS').onclick=()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen().catch(()=>toast('全屏不可用'));else document.exitFullscreen();};
+  document.getElementById('btnReset').onclick=()=>{if(confirm('重置全部进度？')){localStorage.removeItem(KEY);location.reload();}};
+  document.getElementById('btnHelp').onclick=()=>document.getElementById('helpModal').classList.add('show');
+  document.getElementById('helpClose').onclick=()=>document.getElementById('helpModal').classList.remove('show');
+  document.getElementById('btnCheckSort').onclick=checkSort;
+  document.getElementById('btnShuffleItems').onclick=()=>{state.placements={};state.selectedItem=null;state.sortScore=null;renderSort();document.getElementById('sortFeedback').className='feedback';document.getElementById('sortFeedback').textContent='已打乱，请重新分类。';persist();};
+  document.getElementById('btnAutoHint').onclick=()=>{state.showHint=!state.showHint;renderSort();toast(state.showHint?'已显示材质提示':'已隐藏提示');persist();};
+  document.getElementById('btnUseHuman').onclick=()=>{
+    if(state.sortScore==null){toast('请先在训练场检验');return;}
+    state.humanAcc=state.sortScore;document.getElementById('mHuman').textContent=state.humanAcc+'%';persist();toast('已同步人类成绩');
+  };
+  document.getElementById('btnRunAISort').onclick=runAISort;
+  document.getElementById('btnEvalTrain').onclick=evalTrain;
+  document.getElementById('btnBalanced').onclick=()=>{state.train={samples:800,balance:90,bg:20,occlusion:10};renderTrainSliders();evalTrain();};
+  document.getElementById('btnSaveStep').onclick=saveStep;
+  document.getElementById('btnSimFlow').onclick=simFlow;
+  document.getElementById('btnFlowReset').onclick=()=>{state.flowIdx=0;state.flowLogs=[];document.getElementById('flowLog').innerHTML='';renderFlow();document.getElementById('flowFeedback').textContent='流程进度已重置。';persist();};
+  document.getElementById('btnGenExport').onclick=()=>genExport(true);
+  document.getElementById('btnPreviewExport').onclick=()=>genExport(false);
+}
+
+load();
+if(!state.valueStmt){/* keep default textarea */}
+else document.getElementById('valueStmt').value=state.valueStmt;
+bind();
+renderSort();
+renderTrainSliders();
+if(state.accHistory.length){const last=state.accHistory[state.accHistory.length-1];document.getElementById('accBar').style.width=last+'%';document.getElementById('accNum').textContent=last+'%';drawAccChart();}
+renderFlow();
+if(state.humanAcc!=null)document.getElementById('mHuman').textContent=state.humanAcc+'%';
+if(state.aiAcc!=null){document.getElementById('mAI').textContent=state.aiAcc+'%';document.getElementById('diffLog').innerHTML=state.diffs.map(d=>`<div>${d}</div>`).join('');}
+if(state.flowLogs.length)document.getElementById('flowLog').innerHTML=state.flowLogs.map(x=>`<div>${x}</div>`).join('');
+if(state.report)document.getElementById('finalReport').textContent=state.report;
+})();
+</script>
+</body>
+</html>
