@@ -1,0 +1,2242 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>人脸识别原理 · 虚拟特征匹配实验室 | 人工智能通识·第一册</title>
+<style>
+:root {
+  --bg-deep: #061a2e;
+  --bg-mid: #0a2744;
+  --bg-indigo: #122a52;
+  --teal: #1bb8a8;
+  --teal-dim: #128a7e;
+  --teal-glow: rgba(27, 184, 168, 0.35);
+  --orange: #f08a3a;
+  --orange-soft: #ffb36b;
+  --warn: #e6a23c;
+  --danger: #e05454;
+  --ok: #2ec27e;
+  --card: #f7f4ef;
+  --card-2: #eef3f7;
+  --text: #132033;
+  --text-soft: #4a5a6e;
+  --muted: #7a8798;
+  --line: rgba(19, 32, 51, 0.12);
+  --glass: rgba(247, 244, 239, 0.82);
+  --glass-dark: rgba(10, 39, 68, 0.72);
+  --shadow: 0 10px 28px rgba(3, 16, 32, 0.28);
+  --shadow-soft: 0 4px 14px rgba(3, 16, 32, 0.14);
+  --radius: 14px;
+  --radius-sm: 10px;
+  --font: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --touch: 44px;
+  --speed: 1;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 16px;
+  color: var(--text);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(27,184,168,0.18), transparent 55%),
+    radial-gradient(900px 500px at 90% 0%, rgba(240,138,58,0.12), transparent 50%),
+    linear-gradient(165deg, var(--bg-deep) 0%, var(--bg-mid) 45%, var(--bg-indigo) 100%);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+button, input, select, textarea { font-family: inherit; font-size: 16px; }
+button {
+  min-height: var(--touch);
+  min-width: var(--touch);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 18px;
+  transition: transform .15s ease, background .2s ease, box-shadow .2s ease, opacity .2s;
+}
+button:active { transform: translateY(1px); }
+button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 0 16px;
+  background: linear-gradient(180deg, #1fd0be, var(--teal-dim));
+  color: #04231f;
+  box-shadow: 0 4px 12px rgba(27,184,168,.28);
+}
+.btn:hover { filter: brightness(1.05); }
+.btn-ghost {
+  background: rgba(255,255,255,.1);
+  color: #e8f4ff;
+  border: 1px solid rgba(255,255,255,.18);
+  box-shadow: none;
+  font-size: 16px;
+}
+.btn-ghost:hover { background: rgba(255,255,255,.16); }
+.btn-warn {
+  background: linear-gradient(180deg, var(--orange-soft), var(--orange));
+  color: #2a1505;
+  box-shadow: 0 4px 12px rgba(240,138,58,.28);
+}
+.btn-danger {
+  background: linear-gradient(180deg, #ff7a7a, var(--danger));
+  color: #fff;
+}
+.btn-sm { min-height: 40px; font-size: 15px; padding: 0 12px; }
+.icon-btn {
+  width: var(--touch); height: var(--touch); padding: 0;
+  background: rgba(255,255,255,.1);
+  color: #e8f4ff;
+  border: 1px solid rgba(255,255,255,.16);
+}
+
+.app {
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 12px 14px 20px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  gap: 12px;
+  min-height: 100vh;
+}
+
+/* Top bar */
+.topbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px;
+  padding: 12px 16px;
+  background: var(--glass-dark);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-soft);
+  color: #eaf4ff;
+}
+.brand {
+  display: flex; align-items: center; gap: 12px; min-width: 260px; flex: 1;
+}
+.brand-mark {
+  width: 48px; height: 48px; border-radius: 12px;
+  background: linear-gradient(145deg, var(--teal), #0d6e8f);
+  display: grid; place-items: center;
+  box-shadow: 0 0 0 3px rgba(27,184,168,.25);
+}
+.brand h1 {
+  margin: 0; font-size: 1.35rem; font-weight: 700; letter-spacing: .02em;
+  line-height: 1.25;
+}
+.brand p { margin: 2px 0 0; font-size: 13px; color: rgba(232,244,255,.72); }
+.progress-wrap { min-width: 180px; flex: 1; max-width: 320px; }
+.progress-label {
+  display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 6px;
+  color: rgba(232,244,255,.85);
+}
+.progress-bar {
+  height: 10px; border-radius: 999px; background: rgba(255,255,255,.12); overflow: hidden;
+}
+.progress-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--teal), var(--orange-soft));
+  border-radius: inherit;
+  transition: width .35s ease;
+}
+.top-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Main grid */
+.main {
+  display: grid;
+  grid-template-columns: 300px minmax(360px, 1fr) 300px;
+  gap: 12px;
+  min-height: 0;
+}
+@media (max-width: 1280px) {
+  .main { grid-template-columns: 280px minmax(320px, 1fr) 280px; }
+}
+@media (max-width: 1100px) {
+  .main { grid-template-columns: 1fr; }
+}
+
+.panel {
+  background: var(--glass);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,.35);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 14px;
+  min-height: 0;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.panel-dark {
+  background: rgba(8, 28, 48, 0.78);
+  border-color: rgba(255,255,255,.12);
+  color: #eaf4ff;
+}
+.panel h2 {
+  margin: 0;
+  font-size: 1.05rem;
+  display: flex; align-items: center; gap: 8px;
+}
+.panel h3 {
+  margin: 0 0 6px;
+  font-size: .95rem;
+  color: var(--text-soft);
+  font-weight: 700;
+}
+.panel-dark h3 { color: rgba(232,244,255,.78); }
+.section {
+  background: rgba(255,255,255,.55);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+}
+.panel-dark .section {
+  background: rgba(255,255,255,.06);
+  border-color: rgba(255,255,255,.1);
+}
+.scroll-y { overflow: auto; max-height: 100%; }
+
+/* Avatar library */
+.avatar-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+}
+.avatar-card {
+  border: 2px solid transparent;
+  border-radius: 12px;
+  background: #fff;
+  padding: 6px;
+  cursor: pointer;
+  min-height: var(--touch);
+  text-align: center;
+  transition: border-color .2s, box-shadow .2s, transform .15s;
+}
+.avatar-card:hover { transform: translateY(-1px); box-shadow: var(--shadow-soft); }
+.avatar-card.active {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px var(--teal-glow);
+}
+.avatar-card.probe {
+  border-color: var(--orange);
+  box-shadow: 0 0 0 3px rgba(240,138,58,.3);
+}
+.avatar-card canvas { width: 100%; height: auto; display: block; border-radius: 8px; background: #dce9f4; }
+.avatar-card span { display: block; font-size: 12px; margin-top: 4px; color: var(--text-soft); }
+
+.task-list { display: flex; flex-direction: column; gap: 6px; }
+.task-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 10px; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--line); background: #fff;
+  min-height: var(--touch); text-align: left; width: 100%;
+  font-size: 14px; font-weight: 500; color: var(--text);
+}
+.task-item:hover { border-color: var(--teal); }
+.task-item.active { border-color: var(--teal); background: rgba(27,184,168,.1); }
+.task-item.done { border-color: rgba(46,194,126,.45); background: rgba(46,194,126,.1); }
+.task-badge {
+  width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+  display: grid; place-items: center; font-size: 13px; font-weight: 700;
+  background: var(--card-2); color: var(--text-soft);
+}
+.task-item.active .task-badge { background: var(--teal); color: #04231f; }
+.task-item.done .task-badge { background: var(--ok); color: #fff; }
+
+.control-row {
+  display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center;
+  margin-bottom: 8px; font-size: 14px;
+}
+.control-row label { color: var(--text-soft); }
+.control-row output { font-variant-numeric: tabular-nums; font-weight: 700; min-width: 36px; text-align: right; }
+input[type="range"] {
+  width: 100%; height: 28px; accent-color: var(--teal); cursor: pointer;
+}
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  min-height: 36px; padding: 0 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: #fff; font-size: 13px; font-weight: 600;
+  color: var(--text-soft); cursor: pointer;
+}
+.chip.on { background: rgba(27,184,168,.15); border-color: var(--teal); color: var(--teal-dim); }
+.panel-dark .chip { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.14); color: #d7e8f8; }
+.panel-dark .chip.on { background: rgba(27,184,168,.25); border-color: var(--teal); color: #9ef0e4; }
+
+.sample-list { display: flex; flex-direction: column; gap: 6px; max-height: 140px; overflow: auto; }
+.sample-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 10px; border-radius: 8px; background: #fff; border: 1px solid var(--line);
+  font-size: 13px;
+}
+
+/* Center viewport */
+.center { display: flex; flex-direction: column; gap: 12px; min-height: 520px; }
+.viewport-wrap {
+  position: relative;
+  background: linear-gradient(180deg, #071929, #0c3050);
+  border-radius: var(--radius);
+  border: 1px solid rgba(27,184,168,.35);
+  box-shadow: inset 0 0 40px rgba(0,0,0,.35), 0 0 0 1px rgba(255,255,255,.06);
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+  min-height: 320px;
+}
+#sceneCanvas { width: 100%; height: 100%; display: block; cursor: crosshair; }
+.scanline {
+  position: absolute; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--teal), transparent);
+  box-shadow: 0 0 12px var(--teal-glow);
+  animation: scan 2.8s linear infinite;
+  pointer-events: none; opacity: .7;
+}
+@keyframes scan {
+  0% { top: 8%; }
+  100% { top: 92%; }
+}
+.viewport-hud {
+  position: absolute; inset: 0; pointer-events: none;
+  display: flex; flex-direction: column; justify-content: space-between;
+  padding: 10px 12px; color: #c9f7ef; font-size: 12px;
+}
+.hud-top, .hud-bottom { display: flex; justify-content: space-between; gap: 8px; }
+.hud-pill {
+  background: rgba(0,0,0,.35); border: 1px solid rgba(27,184,168,.35);
+  border-radius: 999px; padding: 4px 10px; backdrop-filter: blur(4px);
+}
+.transport {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  padding: 10px; background: rgba(255,255,255,.5); border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+}
+.feature-board {
+  display: grid; grid-template-columns: 1.1fr 1fr; gap: 10px;
+}
+@media (max-width: 900px) { .feature-board { grid-template-columns: 1fr; } }
+.feat-bars { display: flex; flex-direction: column; gap: 8px; }
+.feat-row { display: grid; grid-template-columns: 64px 1fr 42px; gap: 8px; align-items: center; font-size: 13px; }
+.bar {
+  height: 10px; border-radius: 999px; background: rgba(19,32,51,.1); overflow: hidden;
+}
+.bar > i {
+  display: block; height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--teal-dim), var(--teal));
+  border-radius: inherit; transition: width .3s ease;
+}
+.radar-wrap {
+  background: #fff; border-radius: var(--radius-sm); border: 1px solid var(--line);
+  padding: 8px; display: grid; place-items: center; min-height: 180px;
+}
+#radarSvg { width: 100%; max-width: 220px; height: auto; }
+
+.match-anim {
+  height: 8px; border-radius: 999px; background: rgba(19,32,51,.1); overflow: hidden; margin-top: 6px;
+}
+.match-anim > i {
+  display: block; height: 100%; width: 0%;
+  background: linear-gradient(90deg, var(--orange), var(--teal));
+  transition: width .4s ease;
+}
+
+/* Right panel */
+.status {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px; border-radius: 12px; border: 1px solid var(--line);
+  background: #fff; font-size: 14px; line-height: 1.45;
+}
+.status svg { flex-shrink: 0; margin-top: 2px; }
+.status.ok { border-color: rgba(46,194,126,.45); background: rgba(46,194,126,.1); }
+.status.warn { border-color: rgba(230,162,60,.5); background: rgba(230,162,60,.12); }
+.status.err { border-color: rgba(224,84,84,.45); background: rgba(224,84,84,.1); }
+.status.info { border-color: rgba(27,184,168,.4); background: rgba(27,184,168,.1); }
+.metric-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+}
+.metric {
+  background: #fff; border: 1px solid var(--line); border-radius: 10px; padding: 10px;
+}
+.metric .k { font-size: 12px; color: var(--muted); }
+.metric .v { font-size: 1.35rem; font-weight: 800; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.metric .v.teal { color: var(--teal-dim); }
+.metric .v.orange { color: var(--orange); }
+.metric .v.ok { color: var(--ok); }
+.metric .v.err { color: var(--danger); }
+.hint-box {
+  font-size: 13px; color: var(--text-soft); line-height: 1.5;
+  padding: 10px; border-left: 3px solid var(--teal); background: rgba(27,184,168,.08);
+  border-radius: 0 8px 8px 0;
+}
+.knowledge {
+  font-size: 13px; line-height: 1.5; color: var(--text-soft);
+  padding: 10px; border-radius: 10px;
+  background: linear-gradient(135deg, rgba(240,138,58,.12), rgba(27,184,168,.1));
+  border: 1px solid rgba(240,138,58,.25);
+}
+
+/* Bottom */
+.bottom {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1.2fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 1100px) {
+  .bottom { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 700px) {
+  .bottom { grid-template-columns: 1fr; }
+}
+.steps {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+.step {
+  flex: 1; min-width: 70px; padding: 8px 6px; text-align: center;
+  border-radius: 10px; font-size: 12px; font-weight: 700;
+  background: #fff; border: 1px solid var(--line); color: var(--muted);
+}
+.step.on { background: rgba(27,184,168,.18); border-color: var(--teal); color: var(--teal-dim); }
+.step.done { background: rgba(46,194,126,.15); border-color: rgba(46,194,126,.4); color: #1a8a55; }
+.log {
+  height: 110px; overflow: auto; font-size: 12px; line-height: 1.45;
+  background: #0b1f33; color: #b8d4ea; border-radius: 10px; padding: 8px 10px;
+  font-variant-numeric: tabular-nums;
+}
+.log .t { color: #7aa8c8; }
+.log .ok { color: #6ee7a8; }
+.log .warn { color: #ffc878; }
+.log .err { color: #ff9a9a; }
+.privacy-grid { display: grid; gap: 8px; font-size: 13px; }
+.privacy-grid label {
+  display: flex; align-items: center; gap: 8px; min-height: 36px; cursor: pointer;
+}
+.train-bar {
+  height: 12px; border-radius: 999px; background: rgba(19,32,51,.1); overflow: hidden;
+}
+.train-bar > i {
+  display: block; height: 100%; width: 0%;
+  background: linear-gradient(90deg, #0d8a9a, var(--teal), var(--orange-soft));
+  transition: width .4s ease;
+}
+
+/* Modal */
+.modal-backdrop {
+  position: fixed; inset: 0; background: rgba(3,12,24,.55);
+  display: none; place-items: center; z-index: 50; padding: 16px;
+}
+.modal-backdrop.show { display: grid; }
+.modal {
+  width: min(640px, 100%); max-height: 85vh; overflow: auto;
+  background: var(--card); border-radius: 16px; padding: 20px;
+  box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,.5);
+}
+.modal h2 { margin: 0 0 10px; }
+.modal p { margin: 0 0 10px; color: var(--text-soft); line-height: 1.55; }
+.modal ul { margin: 0 0 12px; padding-left: 1.2em; color: var(--text-soft); line-height: 1.55; }
+.modal-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+
+.toast {
+  position: fixed; right: 18px; bottom: 18px; z-index: 60;
+  background: #102840; color: #eaf4ff; padding: 12px 16px; border-radius: 12px;
+  border: 1px solid rgba(27,184,168,.4); box-shadow: var(--shadow);
+  transform: translateY(120%); opacity: 0; transition: .3s ease; max-width: 320px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+  .scanline { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <!-- TOP -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+          <rect x="3" y="5" width="22" height="16" rx="3" stroke="#04231f" stroke-width="2"/>
+          <circle cx="11" cy="12" r="2.2" fill="#04231f"/>
+          <circle cx="17" cy="12" r="2.2" fill="#04231f"/>
+          <path d="M10 16.5c1.2 1.2 5.8 1.2 7 0" stroke="#04231f" stroke-width="1.8" stroke-linecap="round"/>
+          <path d="M9 22h10" stroke="#04231f" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div>
+        <h1>人脸识别原理 · 虚拟特征匹配实验室</h1>
+        <p>第二单元第二节 · 教材 P42–49 · 仅使用虚拟头像</p>
+      </div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-label"><span>学习进度</span><span id="progressText">0 / 9</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+    <div class="top-actions">
+      <button class="btn-ghost btn-sm" id="btnSave" title="保存到本机">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 3h11l3 3v15H5V3z" stroke="currentColor" stroke-width="2"/><path d="M8 3v6h8V3M8 21v-7h8v7" stroke="currentColor" stroke-width="2"/></svg>
+        保存
+      </button>
+      <button class="btn-ghost btn-sm" id="btnExport" title="导出报告">导出</button>
+      <button class="btn-ghost btn-sm" id="btnImport" title="导入数据">导入</button>
+      <input type="file" id="importFile" accept=".json,application/json,text/plain" hidden />
+      <button class="btn-ghost btn-sm" id="btnFullscreen" title="全屏">全屏</button>
+      <button class="btn-ghost btn-sm" id="btnUndo" title="撤销">撤销</button>
+      <button class="btn-ghost btn-sm" id="btnRedo" title="重做">重做</button>
+      <button class="btn-warn btn-sm" id="btnReset" title="重置实验">重置</button>
+      <button class="icon-btn" id="btnHelp" title="帮助" aria-label="帮助">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 17v-1M10.2 9.2a2 2 0 113.2 1.8c-.8.6-1.4 1-1.4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- LEFT -->
+    <aside class="panel scroll-y" id="leftPanel">
+      <div>
+        <h2>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="9" r="4" stroke="currentColor" stroke-width="2"/><path d="M5 20c1.5-3 4-4.5 7-4.5S17.5 17 19 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          虚拟头像库 FaceGroup1
+        </h2>
+        <p style="margin:6px 0 8px;font-size:13px;color:var(--text-soft)">点击选中“待识别”，按住 Ctrl/⌘ 点选第二张做对比。</p>
+        <div class="avatar-grid" id="avatarGrid"></div>
+      </div>
+
+      <div class="section">
+        <h3>实验任务</h3>
+        <div class="task-list" id="taskList"></div>
+      </div>
+
+      <div class="section">
+        <h3>特征微调（当前头像）</h3>
+        <div class="control-row"><label>眼距</label><output id="outEye">50</output></div>
+        <input type="range" id="slEye" min="20" max="80" value="50" />
+        <div class="control-row"><label>眉形弧度</label><output id="outBrow">50</output></div>
+        <input type="range" id="slBrow" min="10" max="90" value="50" />
+        <div class="control-row"><label>鼻宽</label><output id="outNose">50</output></div>
+        <input type="range" id="slNose" min="20" max="80" value="50" />
+        <div class="control-row"><label>嘴宽</label><output id="outMouth">50</output></div>
+        <input type="range" id="slMouth" min="20" max="80" value="50" />
+        <div class="control-row"><label>脸型圆度</label><output id="outFace">50</output></div>
+        <input type="range" id="slFace" min="20" max="90" value="50" />
+      </div>
+
+      <div class="section">
+        <h3>训练样本</h3>
+        <div class="chip-row" style="margin-bottom:8px">
+          <button class="chip on" data-sample="front" type="button">正面</button>
+          <button class="chip" data-sample="left" type="button">左侧</button>
+          <button class="chip" data-sample="right" type="button">右侧</button>
+          <button class="chip" data-sample="smile" type="button">微笑</button>
+          <button class="chip" data-sample="dim" type="button">弱光</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          <button class="btn btn-sm" id="btnAddSample" type="button">添加样本</button>
+          <button class="btn-ghost btn-sm" id="btnClearSamples" type="button" style="color:var(--text);border-color:var(--line);background:#fff">清空</button>
+        </div>
+        <div class="sample-list" id="sampleList"></div>
+      </div>
+    </aside>
+
+    <!-- CENTER -->
+    <section class="panel center" id="centerPanel">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+        <h2 style="margin:0">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="6" width="18" height="12" rx="2" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/></svg>
+          校园门禁虚拟摄像头
+        </h2>
+        <div class="chip-row" id="bgChips">
+          <button class="chip on" data-bg="gate" type="button">校门</button>
+          <button class="chip" data-bg="hall" type="button">大厅</button>
+          <button class="chip" data-bg="yard" type="button">操场</button>
+          <button class="chip" data-bg="night" type="button">夜景</button>
+        </div>
+      </div>
+
+      <div class="viewport-wrap" id="viewport">
+        <canvas id="sceneCanvas" width="800" height="600"></canvas>
+        <div class="scanline" id="scanline"></div>
+        <div class="viewport-hud">
+          <div class="hud-top">
+            <span class="hud-pill" id="hudMode">模式：检测</span>
+            <span class="hud-pill" id="hudFps">虚拟帧：30fps</span>
+          </div>
+          <div class="hud-bottom">
+            <span class="hud-pill" id="hudDetect">检测：—</span>
+            <span class="hud-pill" id="hudMatch">匹配：—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="transport">
+        <button class="btn btn-sm" id="btnRun" type="button">运行</button>
+        <button class="btn-ghost btn-sm" id="btnPause" type="button" style="color:var(--text);border-color:var(--line);background:#fff">暂停</button>
+        <button class="btn-ghost btn-sm" id="btnStep" type="button" style="color:var(--text);border-color:var(--line);background:#fff">单步</button>
+        <button class="btn-ghost btn-sm" id="btnSpeed" type="button" style="color:var(--text);border-color:var(--line);background:#fff">速度 ×1</button>
+        <button class="btn-ghost btn-sm" id="btnPipelineReset" type="button" style="color:var(--text);border-color:var(--line);background:#fff">流程复位</button>
+        <span style="font-size:13px;color:var(--text-soft);margin-left:auto" id="pipelineHint">点击“运行”按：采集 → 检测 → 提取 → 比较 → 判断</span>
+      </div>
+
+      <div class="feature-board">
+        <div class="section" style="margin:0">
+          <h3>特征向量（点击五官查看数值）</h3>
+          <div class="feat-bars" id="featBars"></div>
+          <div class="match-anim"><i id="matchAnimBar"></i></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px" id="featTip">提示：在视窗中点击眼睛、眉毛、鼻子、嘴巴或轮廓。</div>
+        </div>
+        <div class="radar-wrap">
+          <svg id="radarSvg" viewBox="0 0 220 220" aria-label="特征雷达图"></svg>
+        </div>
+      </div>
+
+      <div class="section" style="margin:0">
+        <h3>特征比较结果</h3>
+        <div id="compareTable" style="font-size:13px;overflow:auto"></div>
+      </div>
+    </section>
+
+    <!-- RIGHT -->
+    <aside class="panel scroll-y" id="rightPanel">
+      <h2>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 14l4-4 4 3 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M14 5h6v6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        条件与判定
+      </h2>
+
+      <div class="section">
+        <h3>采集条件</h3>
+        <div class="control-row"><label>角度 (°)</label><output id="outAngle">0</output></div>
+        <input type="range" id="slAngle" min="-45" max="45" value="0" />
+        <div class="control-row"><label>光照</label><output id="outLight">80</output></div>
+        <input type="range" id="slLight" min="10" max="100" value="80" />
+        <div class="control-row"><label>遮挡</label><output id="outOcc">0</output></div>
+        <input type="range" id="slOcc" min="0" max="80" value="0" />
+        <div class="control-row"><label>表情强度</label><output id="outExpr">0</output></div>
+        <input type="range" id="slExpr" min="0" max="80" value="0" />
+        <div class="control-row"><label>清晰度</label><output id="outClear">90</output></div>
+        <input type="range" id="slClear" min="20" max="100" value="90" />
+      </div>
+
+      <div class="section">
+        <h3>阈值实验</h3>
+        <div class="control-row"><label>相似度阈值</label><output id="outThr">75</output></div>
+        <input type="range" id="slThr" min="50" max="95" value="75" />
+        <div class="metric-grid" style="margin-top:8px">
+          <div class="metric"><div class="k">相似度</div><div class="v teal" id="mSim">—</div></div>
+          <div class="metric"><div class="k">置信度</div><div class="v orange" id="mConf">—</div></div>
+          <div class="metric"><div class="k">误识(FA)</div><div class="v err" id="mFA">0</div></div>
+          <div class="metric"><div class="k">拒识(FR)</div><div class="v warn" id="mFR" style="color:var(--warn)">0</div></div>
+        </div>
+        <div style="margin-top:8px;font-size:13px;color:var(--text-soft)">通过人数：<strong id="mPass">0</strong> / <span id="mTotal">0</span></div>
+      </div>
+
+      <div id="statusBox" class="status info">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 8v5M12 16.5v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <div><strong>准备就绪</strong><br/>选择虚拟头像并运行流程，观察检测与匹配。</div>
+      </div>
+
+      <div class="hint-box" id="hintBox">任务提示会显示在这里。先完成“人脸检测”任务。</div>
+
+      <div class="knowledge">
+        <strong>知识卡 · 安全规范</strong><br/>
+        《人脸识别技术应用安全管理办法》自 <strong>2025-06-01</strong> 起施行。人脸信息属于敏感个人信息：须取得同意、明确用途、最短保存、支持删除，且 AI 结果可能出错，重要场景应人工复核。不要把本人照片随意交给陌生人。
+      </div>
+
+      <div class="section">
+        <h3>活体检测（虚拟动作）</h3>
+        <div class="chip-row" id="livenessChips">
+          <button class="chip" data-live="blink" type="button">眨眼</button>
+          <button class="chip" data-live="mouth" type="button">张嘴</button>
+          <button class="chip" data-live="turn" type="button">转头</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px" id="livenessTip">用虚拟动作证明“真人在场”，防止照片冒用。本实验不使用真实摄像头。</div>
+      </div>
+
+      <div class="section">
+        <h3>故障注入（错误诊断）</h3>
+        <div class="chip-row" id="faultChips">
+          <button class="chip" data-fault="few" type="button">样本过少</button>
+          <button class="chip" data-fault="light" type="button">光照单一</button>
+          <button class="chip" data-fault="label" type="button">标签错误</button>
+          <button class="chip" data-fault="thr" type="button">阈值不当</button>
+        </div>
+        <button class="btn btn-sm" id="btnFixFault" type="button" style="width:100%;margin-top:8px">一键修复建议</button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- BOTTOM -->
+  <footer class="bottom">
+    <div class="panel" style="padding:12px">
+      <h3>处理步骤</h3>
+      <div class="steps" id="steps">
+        <div class="step" data-step="0">采集</div>
+        <div class="step" data-step="1">检测</div>
+        <div class="step" data-step="2">提取</div>
+        <div class="step" data-step="3">比较</div>
+        <div class="step" data-step="4">判断</div>
+      </div>
+    </div>
+    <div class="panel" style="padding:12px">
+      <h3>训练进度</h3>
+      <div class="train-bar"><i id="trainFill"></i></div>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-top:8px;color:var(--text-soft)">
+        <span id="trainText">未训练</span>
+        <span id="stabilityText">稳定性：—</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn btn-sm" id="btnTrain" type="button">模拟训练</button>
+        <button class="btn-ghost btn-sm" id="btnCompareStab" type="button" style="color:var(--text);border-color:var(--line);background:#fff">对比稳定性</button>
+      </div>
+    </div>
+    <div class="panel panel-dark" style="padding:12px">
+      <h3>识别日志</h3>
+      <div class="log" id="logBox"></div>
+    </div>
+    <div class="panel" style="padding:12px">
+      <h3>隐私控制台</h3>
+      <div class="privacy-grid">
+        <label><input type="checkbox" id="pvConsent" checked /> 已获得本人同意采集虚拟特征</label>
+        <label>保存期限（天）
+          <input type="number" id="pvDays" min="1" max="365" value="30" style="width:72px;margin-left:8px;min-height:36px;border-radius:8px;border:1px solid var(--line);padding:0 8px" />
+        </label>
+        <label>用途范围
+          <select id="pvPurpose" style="margin-left:8px;min-height:36px;border-radius:8px;border:1px solid var(--line);padding:0 8px">
+            <option value="gate">校园门禁通行</option>
+            <option value="attend">课堂考勤</option>
+            <option value="research">教学实验（本课）</option>
+          </select>
+        </label>
+        <label><input type="checkbox" id="pvHuman" checked /> 重要通行需人工复核</label>
+        <button class="btn-danger btn-sm" id="btnDeleteAll" type="button">一键删除本机数据</button>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<!-- Help / Report modals -->
+<div class="modal-backdrop" id="helpModal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <h2>使用帮助 · 校园门禁场景</h2>
+    <p>本工具对应教材《人工智能通识·第一册》第二单元第二节《人脸识别原理》（P42–49）。全部使用卡通虚拟头像，不采集真实人脸。</p>
+    <ul>
+      <li><strong>检测</strong>：在不同背景中框出人脸，观察漏检原因（角度过大、遮挡、过暗等）。</li>
+      <li><strong>特征</strong>：把眼睛、眉毛、鼻子、嘴巴、脸型变成可比较的数值。</li>
+      <li><strong>比较与阈值</strong>：与 FaceGroup1 特征库比对；阈值过高易拒识，过低易误识。</li>
+      <li><strong>训练</strong>：添加多角度/表情样本可提高稳定性。</li>
+      <li><strong>隐私</strong>：同意、期限、用途、人工复核、删除——缺一不可。</li>
+    </ul>
+    <p>菜单：保存到本机 / 导出报告 / 导入 / 查看当前 / 恢复教材示例 / 清除数据。</p>
+    <div class="modal-actions">
+      <button class="btn-ghost btn-sm" id="btnViewState" type="button" style="color:var(--text);border-color:var(--line);background:#fff">查看当前</button>
+      <button class="btn-ghost btn-sm" id="btnRestoreDemo" type="button" style="color:var(--text);border-color:var(--line);background:#fff">恢复教材示例</button>
+      <button class="btn" id="btnCloseHelp" type="button">知道了</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="reportModal" role="dialog" aria-modal="true">
+  <div class="modal">
+    <h2>实验报告导出</h2>
+    <p>自动汇总样本、参数、相似度、错误诊断、优化过程与隐私规则。</p>
+    <div class="chip-row" style="margin-bottom:10px">
+      <button class="chip on" id="exportJson" type="button">JSON</button>
+      <button class="chip" id="exportText" type="button">文本</button>
+    </div>
+    <textarea id="reportOut" rows="14" style="width:100%;border-radius:10px;border:1px solid var(--line);padding:10px;font-size:13px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace"></textarea>
+    <div class="modal-actions">
+      <button class="btn-ghost btn-sm" id="btnCopyReport" type="button" style="color:var(--text);border-color:var(--line);background:#fff">复制</button>
+      <button class="btn" id="btnDownloadReport" type="button">下载</button>
+      <button class="btn-ghost btn-sm" id="btnCloseReport" type="button" style="color:var(--text);border-color:var(--line);background:#fff">关闭</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  const STORAGE_KEY = "ai_lab_u2_l2_face_principle_v1";
+  const FEAT_KEYS = [
+    { key: "eye", name: "眼距", color: "#1bb8a8" },
+    { key: "brow", name: "眉形", color: "#2a8fd6" },
+    { key: "nose", name: "鼻宽", color: "#f08a3a" },
+    { key: "mouth", name: "嘴宽", color: "#e05454" },
+    { key: "face", name: "脸型", color: "#8b6cff" }
+  ];
+
+  const TASKS = [
+    { id: "detect", title: "1. 人脸检测", hint: "切换背景并调节角度/遮挡，观察检测框与漏检原因。" },
+    { id: "extract", title: "2. 特征提取", hint: "在视窗点击五官，查看数值如何描述一张脸。" },
+    { id: "compare", title: "3. 特征比较", hint: "选两张头像，比较各特征差异与总相似度。" },
+    { id: "threshold", title: "4. 阈值实验", hint: "拖动阈值滑块，观察误识、拒识与通过人数变化。" },
+    { id: "condition", title: "5. 条件影响", hint: "改变光照、表情、清晰度，看识别结果如何变差。" },
+    { id: "train", title: "6. 虚拟训练", hint: "添加多角度/表情样本并训练，对比稳定性。" },
+    { id: "fault", title: "7. 错误诊断", hint: "注入故障后按提示修复（多样本、多光照、改标签、调阈值）。" },
+    { id: "privacy", title: "8. 隐私控制", hint: "设置同意、保存期限、用途与人工复核，再尝试删除。" },
+    { id: "report", title: "9. 实验报告", hint: "导出 JSON 或文本报告，完成课堂成果。" }
+  ];
+
+  const DEMO_AVATARS = [
+    { id: "A1", name: "小安", skin: "#f3c7a5", hair: "#2b2118", shirt: "#1bb8a8", eye: 52, brow: 48, nose: 44, mouth: 50, face: 55, gallery: true },
+    { id: "A2", name: "小北", skin: "#e8b892", hair: "#1a1a1a", shirt: "#2a8fd6", eye: 46, brow: 62, nose: 58, mouth: 42, face: 40, gallery: true },
+    { id: "A3", name: "小晨", skin: "#f6d2b0", hair: "#5a3a22", shirt: "#f08a3a", eye: 60, brow: 40, nose: 50, mouth: 58, face: 68, gallery: true },
+    { id: "A4", name: "小东", skin: "#d9a888", hair: "#0f1720", shirt: "#6b7cff", eye: 40, brow: 55, nose: 62, mouth: 48, face: 46, gallery: true },
+    { id: "B1", name: "访客甲", skin: "#efc3a0", hair: "#3d2a1c", shirt: "#8899aa", eye: 54, brow: 50, nose: 47, mouth: 52, face: 57, gallery: false },
+    { id: "B2", name: "访客乙", skin: "#e2b08a", hair: "#222", shirt: "#aa8866", eye: 35, brow: 70, nose: 70, mouth: 35, face: 35, gallery: false }
+  ];
+
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
+
+  function defaultState() {
+    return {
+      avatars: clone(DEMO_AVATARS),
+      selectedId: "A1",
+      compareId: "A2",
+      taskId: "detect",
+      doneTasks: {},
+      bg: "gate",
+      angle: 0,
+      light: 80,
+      occ: 0,
+      expr: 0,
+      clear: 90,
+      threshold: 75,
+      samples: [],
+      sampleType: "front",
+      trained: false,
+      trainProgress: 0,
+      stabilityBefore: null,
+      stabilityAfter: null,
+      faults: {},
+      liveness: { blink: false, mouth: false, turn: false },
+      pipelineStep: -1,
+      running: false,
+      speed: 1,
+      privacy: { consent: true, days: 30, purpose: "research", human: true },
+      logs: [],
+      fa: 0,
+      fr: 0,
+      pass: 0,
+      totalTrials: 0,
+      lastSim: null,
+      lastConf: null,
+      lastDetect: null,
+      clickedFeat: null,
+      reportTouched: false
+    };
+  }
+
+  let state = defaultState();
+  let undoStack = [];
+  let redoStack = [];
+  let pipelineTimer = null;
+  let animT = 0;
+  let rafId = 0;
+  let exportFormat = "json";
+
+  const $ = (id) => document.getElementById(id);
+  const canvas = $("sceneCanvas");
+  const ctx = canvas.getContext("2d");
+
+  /* ---------- Utils ---------- */
+  function toast(msg) {
+    const el = $("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => el.classList.remove("show"), 2200);
+  }
+
+  function log(msg, level) {
+    const time = new Date().toLocaleTimeString("zh-CN", { hour12: false });
+    state.logs.unshift({ time, msg, level: level || "info" });
+    if (state.logs.length > 80) state.logs.pop();
+    renderLog();
+  }
+
+  function pushHistory() {
+    undoStack.push(clone(state));
+    if (undoStack.length > 40) undoStack.shift();
+    redoStack = [];
+  }
+
+  function undo() {
+    if (!undoStack.length) { toast("没有可撤销的操作"); return; }
+    redoStack.push(clone(state));
+    state = undoStack.pop();
+    bindSlidersFromState();
+    renderAll();
+    toast("已撤销");
+  }
+
+  function redo() {
+    if (!redoStack.length) { toast("没有可重做的操作"); return; }
+    undoStack.push(clone(state));
+    state = redoStack.pop();
+    bindSlidersFromState();
+    renderAll();
+    toast("已重做");
+  }
+
+  function getAvatar(id) {
+    return state.avatars.find(a => a.id === id);
+  }
+
+  function selectedAvatar() {
+    return getAvatar(state.selectedId) || state.avatars[0];
+  }
+
+  function compareAvatar() {
+    return getAvatar(state.compareId);
+  }
+
+  function featVector(av) {
+    return { eye: av.eye, brow: av.brow, nose: av.nose, mouth: av.mouth, face: av.face };
+  }
+
+  function conditionPenalty() {
+    const a = Math.abs(state.angle);
+    const lightPen = state.light < 40 ? (40 - state.light) * 0.55 : (state.light > 95 ? 4 : 0);
+    const occPen = state.occ * 0.35;
+    const exprPen = state.expr * 0.12;
+    const clearPen = (100 - state.clear) * 0.25;
+    const anglePen = a > 25 ? (a - 25) * 0.55 : a * 0.15;
+    let faultPen = 0;
+    if (state.faults.few) faultPen += 12;
+    if (state.faults.light) faultPen += 8;
+    if (state.faults.label) faultPen += 18;
+    if (state.faults.thr) faultPen += 0;
+    const trainBonus = state.trained ? Math.min(14, state.samples.length * 2.2) : 0;
+    return { anglePen, lightPen, occPen, exprPen, clearPen, faultPen, trainBonus };
+  }
+
+  function detectFace() {
+    const p = conditionPenalty();
+    const score = 100 - p.anglePen - p.lightPen - p.occPen - p.clearPen * 0.6;
+    const reasons = [];
+    if (Math.abs(state.angle) > 38) reasons.push("侧脸角度过大");
+    if (state.light < 28) reasons.push("光照过暗");
+    if (state.occ > 55) reasons.push("遮挡过多");
+    if (state.clear < 35) reasons.push("画面模糊");
+    if (state.bg === "night" && state.light < 45) reasons.push("夜景噪声干扰");
+    const ok = score >= 42 && reasons.length < 3 && !(state.occ > 70 && Math.abs(state.angle) > 30);
+    return {
+      ok,
+      score: Math.max(0, Math.min(100, score)),
+      box: ok ? { x: 0.28, y: 0.18, w: 0.44, h: 0.58 } : null,
+      reasons: ok ? [] : (reasons.length ? reasons : ["未检测到有效人脸区域"])
+    };
+  }
+
+  function distortedFeatures(av) {
+    const p = conditionPenalty();
+    const noise = (base, amp) => {
+      const n = ((av.id.charCodeAt(0) + base) % 7) - 3;
+      return Math.max(5, Math.min(95, base + n * 0.4 - (p.anglePen + p.occPen + p.exprPen + p.clearPen + p.faultPen - p.trainBonus) * amp * 0.08));
+    };
+    return {
+      eye: noise(av.eye + state.angle * 0.08, 1.1),
+      brow: noise(av.brow + state.expr * 0.05, 0.9),
+      nose: noise(av.nose, 0.7),
+      mouth: noise(av.mouth + state.expr * 0.12, 1.2),
+      face: noise(av.face - Math.abs(state.angle) * 0.1, 0.8)
+    };
+  }
+
+  function similarity(a, b) {
+    let sum = 0;
+    const diffs = {};
+    FEAT_KEYS.forEach(f => {
+      const d = Math.abs(a[f.key] - b[f.key]);
+      diffs[f.key] = d;
+      sum += d;
+    });
+    const raw = Math.max(0, 100 - sum / 5 * 1.35);
+    const p = conditionPenalty();
+    const adj = raw - p.anglePen * 0.35 - p.lightPen * 0.25 - p.occPen * 0.3 - p.exprPen * 0.2 - p.clearPen * 0.2 - p.faultPen + p.trainBonus * 0.5;
+    const sim = Math.max(0, Math.min(99.5, adj));
+    return { sim, diffs, raw };
+  }
+
+  function confidenceFrom(det, sim) {
+    let c = det.score * 0.35 + sim * 0.55;
+    if (state.liveness.blink && state.liveness.mouth) c += 4;
+    if (state.liveness.turn) c += 3;
+    if (!state.privacy.consent) c -= 20;
+    if (state.faults.label) c -= 15;
+    return Math.max(0, Math.min(99, c));
+  }
+
+  function gallerySims(probeFeat) {
+    return state.avatars.filter(a => a.gallery).map(a => {
+      const s = similarity(probeFeat, featVector(a));
+      return { id: a.id, name: a.name, sim: s.sim, diffs: s.diffs };
+    }).sort((x, y) => y.sim - x.sim);
+  }
+
+  function evaluateThresholdStats() {
+    // Simulate gallery verification for all avatars as probe under current conditions
+    let fa = 0, fr = 0, pass = 0, total = 0;
+    const thr = state.faults.thr ? Math.min(95, state.threshold + 15) : state.threshold;
+    const det = detectFace();
+    state.avatars.forEach(probe => {
+      total++;
+      if (!det.ok) { fr++; return; }
+      const feat = distortedFeatures(probe);
+      const ranks = gallerySims(feat);
+      const best = ranks[0];
+      const isSame = probe.gallery && best && best.id === probe.id;
+      const accepted = best && best.sim >= thr;
+      if (accepted) {
+        pass++;
+        if (!isSame && !probe.gallery) fa++;
+        if (!isSame && probe.gallery && best.id !== probe.id) fa++;
+      } else {
+        if (probe.gallery) fr++;
+      }
+    });
+    // label fault flips one gallery identity
+    if (state.faults.label) { fa += 1; pass = Math.max(0, pass - 1); }
+    state.fa = fa;
+    state.fr = fr;
+    state.pass = pass;
+    state.totalTrials = total;
+    return { fa, fr, pass, total, thr };
+  }
+
+  function markTask(id) {
+    if (!state.doneTasks[id]) {
+      state.doneTasks[id] = true;
+      log("完成任务：" + TASKS.find(t => t.id === id).title, "ok");
+      updateProgress();
+    }
+  }
+
+  function updateProgress() {
+    const n = Object.keys(state.doneTasks).length;
+    $("progressText").textContent = n + " / " + TASKS.length;
+    $("progressFill").style.width = (n / TASKS.length * 100) + "%";
+  }
+
+  /* ---------- Drawing ---------- */
+  function drawMiniAvatar(c, av, w, h) {
+    const g = c.getContext("2d");
+    g.clearRect(0, 0, w, h);
+    g.fillStyle = "#d7e6f2";
+    g.fillRect(0, 0, w, h);
+    drawFace(g, av, w / 2, h * 0.52, Math.min(w, h) * 0.38, 0, 90, 0, 0, 100, {});
+  }
+
+  function drawBackground(g, w, h) {
+    const bg = state.bg;
+    if (bg === "gate") {
+      const grd = g.createLinearGradient(0, 0, 0, h);
+      grd.addColorStop(0, "#6eb6e8");
+      grd.addColorStop(0.45, "#b8d8ef");
+      grd.addColorStop(1, "#8aa89a");
+      g.fillStyle = grd;
+      g.fillRect(0, 0, w, h);
+      g.fillStyle = "#4a6170";
+      g.fillRect(0, h * 0.62, w, h * 0.38);
+      g.fillStyle = "#2c4558";
+      g.fillRect(w * 0.08, h * 0.2, w * 0.18, h * 0.42);
+      g.fillRect(w * 0.74, h * 0.2, w * 0.18, h * 0.42);
+      g.fillStyle = "#f08a3a";
+      g.fillRect(w * 0.35, h * 0.12, w * 0.3, h * 0.08);
+      g.fillStyle = "#fff";
+      g.font = "bold 18px " + getComputedStyle(document.body).fontFamily;
+      g.fillText("智慧校门", w * 0.40, h * 0.175);
+    } else if (bg === "hall") {
+      g.fillStyle = "#dfe7ee";
+      g.fillRect(0, 0, w, h);
+      g.fillStyle = "#c5d0db";
+      g.fillRect(0, h * 0.7, w, h * 0.3);
+      for (let i = 0; i < 5; i++) {
+        g.fillStyle = i % 2 ? "#b7c4d2" : "#aebccb";
+        g.fillRect(w * 0.1 + i * w * 0.16, h * 0.15, w * 0.08, h * 0.55);
+      }
+    } else if (bg === "yard") {
+      const grd = g.createLinearGradient(0, 0, 0, h);
+      grd.addColorStop(0, "#87c5ef");
+      grd.addColorStop(1, "#6fae5e");
+      g.fillStyle = grd;
+      g.fillRect(0, 0, w, h);
+      g.fillStyle = "#5a9450";
+      g.beginPath();
+      g.ellipse(w * 0.5, h * 0.85, w * 0.45, h * 0.18, 0, 0, Math.PI * 2);
+      g.fill();
+    } else {
+      const grd = g.createLinearGradient(0, 0, 0, h);
+      grd.addColorStop(0, "#0b1630");
+      grd.addColorStop(1, "#1a2a44");
+      g.fillStyle = grd;
+      g.fillRect(0, 0, w, h);
+      g.fillStyle = "rgba(255,255,200,.35)";
+      for (let i = 0; i < 18; i++) {
+        g.beginPath();
+        g.arc((i * 97) % w, (i * 53) % (h * 0.5), 1.2, 0, Math.PI * 2);
+        g.fill();
+      }
+      g.fillStyle = "#24364f";
+      g.fillRect(0, h * 0.7, w, h * 0.3);
+    }
+  }
+
+  function drawFace(g, av, cx, cy, r, angle, light, occ, expr, clear, live) {
+    g.save();
+    g.translate(cx, cy);
+    g.rotate((angle * Math.PI) / 180);
+    const blur = Math.max(0, (100 - clear) / 18);
+    g.filter = blur > 0.4 ? "blur(" + blur + "px)" : "none";
+
+    // lighting overlay base
+    const dim = light / 100;
+
+    // shoulders
+    g.fillStyle = av.shirt;
+    g.beginPath();
+    g.ellipse(0, r * 1.55, r * 1.35, r * 0.7, 0, 0, Math.PI * 2);
+    g.fill();
+
+    // hair back
+    g.fillStyle = av.hair;
+    g.beginPath();
+    g.ellipse(0, -r * 0.15, r * (0.95 + (av.face - 50) / 220), r * 1.05, 0, 0, Math.PI * 2);
+    g.fill();
+
+    // face
+    const faceRx = r * (0.78 + (av.face - 50) / 280);
+    const faceRy = r * (0.92 - (av.face - 50) / 400);
+    g.fillStyle = av.skin;
+    g.beginPath();
+    g.ellipse(0, 0, faceRx, faceRy, 0, 0, Math.PI * 2);
+    g.fill();
+
+    // bangs
+    g.fillStyle = av.hair;
+    g.beginPath();
+    g.ellipse(0, -r * 0.55, faceRx * 0.95, r * 0.42, 0, Math.PI, Math.PI * 2);
+    g.fill();
+
+    const eyeGap = r * (0.28 + (av.eye - 50) / 220);
+    const eyeY = -r * 0.08;
+    const eyeR = r * 0.09;
+    const blink = live && live.blink ? Math.abs(Math.sin(animT * 0.01)) : 1;
+    const eyeOpen = Math.max(0.15, 1 - (live && live.blinkPhase ? live.blinkPhase : 0) * 0.85) * blink;
+
+    // brows
+    g.strokeStyle = av.hair;
+    g.lineWidth = r * 0.05;
+    g.lineCap = "round";
+    const browArc = (av.brow - 50) / 80;
+    [[-eyeGap, 1], [eyeGap, -1]].forEach(([x, dir]) => {
+      g.beginPath();
+      g.moveTo(x - r * 0.12, eyeY - r * 0.22 + browArc * 4);
+      g.quadraticCurveTo(x, eyeY - r * 0.28 - browArc * 8, x + r * 0.12, eyeY - r * 0.22 + browArc * 4);
+      g.stroke();
+    });
+
+    // eyes
+    [[-eyeGap, eyeY], [eyeGap, eyeY]].forEach(([x, y]) => {
+      g.fillStyle = "#fff";
+      g.beginPath();
+      g.ellipse(x, y, eyeR * 1.15, eyeR * 0.9 * eyeOpen, 0, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = "#1a2433";
+      g.beginPath();
+      g.ellipse(x, y, eyeR * 0.45, eyeR * 0.45 * eyeOpen, 0, 0, Math.PI * 2);
+      g.fill();
+    });
+
+    // nose
+    const noseW = r * (0.08 + (av.nose - 50) / 400);
+    g.strokeStyle = "rgba(80,50,30,.45)";
+    g.lineWidth = r * 0.035;
+    g.beginPath();
+    g.moveTo(0, -r * 0.02);
+    g.lineTo(-noseW, r * 0.22);
+    g.lineTo(noseW, r * 0.22);
+    g.stroke();
+
+    // mouth
+    const mouthW = r * (0.18 + (av.mouth - 50) / 280);
+    const smile = expr / 100 + (live && live.mouth ? 0.35 : 0);
+    g.strokeStyle = "#b45656";
+    g.lineWidth = r * 0.045;
+    g.beginPath();
+    if (live && live.mouthOpen) {
+      g.fillStyle = "#6a3030";
+      g.ellipse(0, r * 0.38, mouthW, r * 0.1, 0, 0, Math.PI * 2);
+      g.fill();
+    } else {
+      g.moveTo(-mouthW, r * 0.38);
+      g.quadraticCurveTo(0, r * (0.38 + 0.18 * smile), mouthW, r * 0.38);
+      g.stroke();
+    }
+
+    // occlusion
+    if (occ > 5) {
+      g.fillStyle = "rgba(20,30,40," + Math.min(0.85, occ / 100) + ")";
+      g.fillRect(-faceRx, -faceRy * 0.2, faceRx * (occ / 50), faceRy * 1.6);
+      if (occ > 40) {
+        g.fillStyle = "#222";
+        g.fillRect(-faceRx * 0.9, -r * 0.2, faceRx * 1.8, r * 0.18);
+      }
+    }
+
+    // dim lighting
+    g.fillStyle = "rgba(5,15,30," + (1 - dim) * 0.72 + ")";
+    g.beginPath();
+    g.ellipse(0, 0, faceRx * 1.05, faceRy * 1.05, 0, 0, Math.PI * 2);
+    g.fill();
+
+    g.restore();
+    g.filter = "none";
+  }
+
+  function drawLandmarks(g, box, av, w, h) {
+    if (!box) return;
+    const x = box.x * w, y = box.y * h, bw = box.w * w, bh = box.h * h;
+    const cx = x + bw / 2, cy = y + bh * 0.48;
+    const eyeGap = bw * (0.16 + (av.eye - 50) / 400);
+    const pts = [
+      { k: "eye", x: cx - eyeGap, y: cy - bh * 0.06 },
+      { k: "eye", x: cx + eyeGap, y: cy - bh * 0.06 },
+      { k: "brow", x: cx - eyeGap, y: cy - bh * 0.16 },
+      { k: "brow", x: cx + eyeGap, y: cy - bh * 0.16 },
+      { k: "nose", x: cx, y: cy + bh * 0.08 },
+      { k: "mouth", x: cx, y: cy + bh * 0.22 },
+      { k: "face", x: cx, y: cy + bh * 0.38 }
+    ];
+    pts.forEach(p => {
+      const hi = state.clickedFeat === p.k;
+      g.fillStyle = hi ? "#f08a3a" : "#1bb8a8";
+      g.beginPath();
+      g.arc(p.x, p.y, hi ? 5 : 3.5, 0, Math.PI * 2);
+      g.fill();
+      g.strokeStyle = "rgba(255,255,255,.8)";
+      g.lineWidth = 1;
+      g.stroke();
+    });
+  }
+
+  function drawScene() {
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+    drawBackground(ctx, w, h);
+
+    // vignette camera frame
+    ctx.strokeStyle = "rgba(27,184,168,.45)";
+    ctx.lineWidth = 3;
+    ctx.strokeRect(12, 12, w - 24, h - 24);
+
+    const av = selectedAvatar();
+    const live = {
+      blink: state.liveness.blink,
+      blinkPhase: state.liveness._blinkPhase || 0,
+      mouth: state.liveness.mouth,
+      mouthOpen: state.liveness._mouthOpen || 0,
+      turn: state.liveness.turn
+    };
+    const turnExtra = live.turn ? Math.sin(animT * 0.004) * 18 : 0;
+    const cx = w * 0.5 + (state.liveness.turn ? turnExtra * 1.2 : 0);
+    const cy = h * 0.52;
+    const r = Math.min(w, h) * 0.22;
+
+    drawFace(ctx, av, cx, cy, r, state.angle + turnExtra * 0.4, state.light, state.occ, state.expr, state.clear, live);
+
+    const det = detectFace();
+    state.lastDetect = det;
+
+    if (det.ok && det.box) {
+      const bx = det.box.x * w, by = det.box.y * h, bw = det.box.w * w, bh = det.box.h * h;
+      ctx.strokeStyle = "#1bb8a8";
+      ctx.lineWidth = 2.5;
+      ctx.setLineDash([8, 6]);
+      ctx.strokeRect(bx, by, bw, bh);
+      ctx.setLineDash([]);
+      // corners
+      ctx.strokeStyle = "#f08a3a";
+      ctx.lineWidth = 3;
+      const L = 18;
+      [[bx, by], [bx + bw, by], [bx, by + bh], [bx + bw, by + bh]].forEach(([px, py], i) => {
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(px + (i % 2 === 0 ? L : -L), py);
+        ctx.moveTo(px, py);
+        ctx.lineTo(px, py + (i < 2 ? L : -L));
+        ctx.stroke();
+      });
+      if (state.pipelineStep >= 2 || state.clickedFeat) {
+        drawLandmarks(ctx, det.box, av, w, h);
+      }
+      // feature vector trails during compare
+      if (state.pipelineStep >= 3) {
+        const other = compareAvatar();
+        if (other) {
+          ctx.fillStyle = "rgba(240,138,58,.15)";
+          ctx.fillRect(w * 0.68, h * 0.2, w * 0.26, h * 0.45);
+          drawFace(ctx, other, w * 0.81, h * 0.42, r * 0.55, 0, 90, 0, 0, 100, {});
+          ctx.fillStyle = "#ffd7a8";
+          ctx.font = "14px sans-serif";
+          ctx.fillText("特征库：" + other.name, w * 0.70, h * 0.18);
+          // match lines
+          const pulse = 0.4 + 0.6 * Math.abs(Math.sin(animT * 0.005));
+          ctx.strokeStyle = "rgba(27,184,168," + pulse + ")";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx + r * 0.6, cy);
+          ctx.bezierCurveTo(w * 0.6, cy - 40, w * 0.65, h * 0.42, w * 0.72, h * 0.42);
+          ctx.stroke();
+        }
+      }
+      $("hudDetect").textContent = "检测：成功 " + det.score.toFixed(0) + "%";
+    } else {
+      ctx.fillStyle = "rgba(224,84,84,.85)";
+      ctx.font = "bold 20px " + getComputedStyle(document.body).fontFamily;
+      ctx.fillText("未检出人脸", w * 0.38, h * 0.12);
+      ctx.font = "14px sans-serif";
+      ctx.fillStyle = "#ffc8c8";
+      (det.reasons || []).forEach((r, i) => ctx.fillText("· " + r, w * 0.38, h * 0.12 + 28 + i * 22));
+      $("hudDetect").textContent = "检测：失败";
+    }
+
+    // judgment banner
+    if (state.pipelineStep >= 4 && state.lastSim != null) {
+      const thr = effectiveThreshold();
+      const pass = state.lastSim >= thr && det.ok;
+      ctx.fillStyle = pass ? "rgba(46,194,126,.9)" : "rgba(224,84,84,.9)";
+      ctx.fillRect(w * 0.25, h * 0.88, w * 0.5, 36);
+      ctx.fillStyle = "#fff";
+      ctx.font = "bold 16px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText(pass ? "判定：通过门禁（需注意误识风险）" : "判定：拒绝 / 需人工核验", w * 0.5, h * 0.88 + 24);
+      ctx.textAlign = "left";
+      $("hudMatch").textContent = "匹配：" + state.lastSim.toFixed(1) + "% / 阈值 " + thr;
+    }
+
+    // vector HUD
+    if (state.pipelineStep >= 2) {
+      const feat = distortedFeatures(av);
+      ctx.fillStyle = "rgba(0,0,0,.35)";
+      ctx.fillRect(16, h - 96, 200, 78);
+      ctx.fillStyle = "#9ef0e4";
+      ctx.font = "12px monospace";
+      ctx.fillText("V = [" + FEAT_KEYS.map(f => feat[f.key].toFixed(0)).join(", ") + "]", 24, h - 70);
+      ctx.fillText("采集→数值化→可比较", 24, h - 48);
+    }
+  }
+
+  function effectiveThreshold() {
+    return state.faults.thr ? Math.min(95, state.threshold + 15) : state.threshold;
+  }
+
+  /* ---------- Radar ---------- */
+  function renderRadar() {
+    const svg = $("radarSvg");
+    const av = selectedAvatar();
+    const feat = distortedFeatures(av);
+    const other = compareAvatar();
+    const feat2 = other ? featVector(other) : null;
+    const cx = 110, cy = 110, R = 78;
+    const n = FEAT_KEYS.length;
+    let html = "";
+    for (let ring = 1; ring <= 4; ring++) {
+      const rr = R * ring / 4;
+      html += '<circle cx="' + cx + '" cy="' + cy + '" r="' + rr + '" fill="none" stroke="rgba(19,32,51,.12)" />';
+    }
+    FEAT_KEYS.forEach((f, i) => {
+      const ang = -Math.PI / 2 + (Math.PI * 2 * i) / n;
+      const x = cx + Math.cos(ang) * R;
+      const y = cy + Math.sin(ang) * R;
+      html += '<line x1="' + cx + '" y1="' + cy + '" x2="' + x + '" y2="' + y + '" stroke="rgba(19,32,51,.12)" />';
+      html += '<text x="' + (cx + Math.cos(ang) * (R + 16)) + '" y="' + (cy + Math.sin(ang) * (R + 16) + 4) + '" text-anchor="middle" font-size="11" fill="#4a5a6e">' + f.name + "</text>";
+    });
+    function poly(vec, color, fill) {
+      let d = "";
+      FEAT_KEYS.forEach((f, i) => {
+        const ang = -Math.PI / 2 + (Math.PI * 2 * i) / n;
+        const rr = R * (vec[f.key] / 100);
+        const x = cx + Math.cos(ang) * rr;
+        const y = cy + Math.sin(ang) * rr;
+        d += (i ? " L " : "M ") + x + " " + y;
+      });
+      d += " Z";
+      return '<path d="' + d + '" fill="' + fill + '" stroke="' + color + '" stroke-width="2" />';
+    }
+    if (feat2) html += poly(feat2, "#f08a3a", "rgba(240,138,58,.18)");
+    html += poly(feat, "#1bb8a8", "rgba(27,184,168,.22)");
+    svg.innerHTML = html;
+  }
+
+  /* ---------- Feature bars & compare ---------- */
+  function renderFeatBars() {
+    const av = selectedAvatar();
+    const feat = distortedFeatures(av);
+    $("featBars").innerHTML = FEAT_KEYS.map(f => {
+      const v = feat[f.key];
+      const hi = state.clickedFeat === f.key ? "font-weight:800;color:" + f.color : "";
+      return '<div class="feat-row" data-feat="' + f.key + '" style="cursor:pointer">' +
+        '<span style="' + hi + '">' + f.name + "</span>" +
+        '<div class="bar"><i style="width:' + v + "%;background:" + f.color + '"></i></div>' +
+        '<span>' + v.toFixed(0) + "</span></div>";
+    }).join("");
+    $("featBars").querySelectorAll(".feat-row").forEach(el => {
+      el.addEventListener("click", () => {
+        pushHistory();
+        state.clickedFeat = el.dataset.feat;
+        const v = distortedFeatures(selectedAvatar())[state.clickedFeat];
+        $("featTip").textContent = FEAT_KEYS.find(x => x.key === state.clickedFeat).name +
+          " → 数值 " + v.toFixed(1) + "（已从图像转换为可比较数据）";
+        markTask("extract");
+        setStatus("info", "特征已提取", "把五官形状变成数字，计算机才能比较两张脸是否相似。");
+        log("提取特征：" + state.clickedFeat + " = " + v.toFixed(1), "ok");
+        renderAll();
+      });
+    });
+  }
+
+  function renderCompare() {
+    const probe = selectedAvatar();
+    const gallery = compareAvatar();
+    const det = detectFace();
+    if (!gallery) {
+      $("compareTable").innerHTML = "<p style='color:var(--muted)'>请再选择一张特征库头像进行对比（Ctrl/⌘+点击）。</p>";
+      return;
+    }
+    const featP = distortedFeatures(probe);
+    const featG = state.faults.label
+      ? { eye: gallery.eye + 20, brow: gallery.brow - 15, nose: gallery.nose + 10, mouth: gallery.mouth - 12, face: gallery.face + 8 }
+      : featVector(gallery);
+    const { sim, diffs } = similarity(featP, featG);
+    state.lastSim = sim;
+    state.lastConf = confidenceFrom(det, sim);
+    const thr = effectiveThreshold();
+    const pass = det.ok && sim >= thr;
+    $("matchAnimBar").style.width = sim + "%";
+
+    let rows = "<table style='width:100%;border-collapse:collapse'>";
+    rows += "<tr style='text-align:left;color:var(--muted)'><th style='padding:4px'>特征</th><th>待识别</th><th>特征库</th><th>差异</th><th>贡献</th></tr>";
+    FEAT_KEYS.forEach(f => {
+      const contrib = Math.max(0, 100 - diffs[f.key] * 1.35);
+      rows += "<tr><td style='padding:4px;font-weight:700;color:" + f.color + "'>" + f.name + "</td>" +
+        "<td>" + featP[f.key].toFixed(1) + "</td><td>" + featG[f.key].toFixed(1) + "</td>" +
+        "<td>" + diffs[f.key].toFixed(1) + "</td><td>" +
+        "<div class='bar' style='min-width:60px'><i style='width:" + contrib + "%;background:" + f.color + "'></i></div></td></tr>";
+    });
+    rows += "</table>";
+    rows += "<div style='margin-top:8px'>总相似度 <strong style='color:var(--teal-dim)'>" + sim.toFixed(1) +
+      "%</strong> · 阈值 <strong>" + thr + "%</strong> · 结果 <strong style='color:" +
+      (pass ? "var(--ok)" : "var(--danger)") + "'>" + (pass ? "匹配通过" : "未通过") + "</strong></div>";
+    if (!det.ok) rows += "<div style='color:var(--danger);margin-top:4px'>检测失败，无法可靠比较：" + (det.reasons || []).join("；") + "</div>";
+    $("compareTable").innerHTML = rows;
+    $("mSim").textContent = sim.toFixed(1) + "%";
+    $("mConf").textContent = state.lastConf.toFixed(1) + "%";
+  }
+
+  function setStatus(type, title, body) {
+    const icons = {
+      ok: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M8 12.5l2.5 2.5L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+      warn: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 4l9 16H3L12 4z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 10v4M12 17v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+      err: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M9 9l6 6M15 9l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+      info: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/><path d="M12 8v5M12 16.5v.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>'
+    };
+    const box = $("statusBox");
+    box.className = "status " + type;
+    box.innerHTML = icons[type] + "<div><strong>" + title + "</strong><br/>" + body + "</div>";
+  }
+
+  function renderLog() {
+    $("logBox").innerHTML = state.logs.map(l =>
+      '<div><span class="t">[' + l.time + ']</span> <span class="' + (l.level || "") + '">' + l.msg + "</span></div>"
+    ).join("") || '<div class="t">暂无日志</div>';
+  }
+
+  function renderAvatars() {
+    const grid = $("avatarGrid");
+    grid.innerHTML = "";
+    state.avatars.forEach(av => {
+      const card = document.createElement("button");
+      card.type = "button";
+      card.className = "avatar-card" + (av.id === state.selectedId ? " active" : "") + (av.id === state.compareId ? " probe" : "");
+      const c = document.createElement("canvas");
+      c.width = 96; c.height = 96;
+      drawMiniAvatar(c, av, 96, 96);
+      const span = document.createElement("span");
+      span.textContent = av.name + (av.gallery ? " ·库" : " ·访");
+      card.appendChild(c);
+      card.appendChild(span);
+      card.addEventListener("click", (e) => {
+        pushHistory();
+        if (e.ctrlKey || e.metaKey) {
+          state.compareId = av.id;
+          log("对比对象：" + av.name, "info");
+          markTask("compare");
+        } else {
+          state.selectedId = av.id;
+          syncFeatureSliders();
+          log("选中待识别：" + av.name, "info");
+        }
+        renderAll();
+      });
+      grid.appendChild(card);
+    });
+  }
+
+  function renderTasks() {
+    $("taskList").innerHTML = TASKS.map(t => {
+      const done = !!state.doneTasks[t.id];
+      const active = state.taskId === t.id;
+      return '<button type="button" class="task-item' + (done ? " done" : "") + (active ? " active" : "") +
+        '" data-task="' + t.id + '"><span class="task-badge">' + (done ? "✓" : t.title.split(".")[0]) +
+        "</span><span>" + t.title + "</span></button>";
+    }).join("");
+    $("taskList").querySelectorAll(".task-item").forEach(btn => {
+      btn.addEventListener("click", () => {
+        state.taskId = btn.dataset.task;
+        const t = TASKS.find(x => x.id === state.taskId);
+        $("hintBox").textContent = t.hint;
+        renderTasks();
+      });
+    });
+    const cur = TASKS.find(x => x.id === state.taskId);
+    if (cur) $("hintBox").textContent = cur.hint;
+  }
+
+  function renderSamples() {
+    $("sampleList").innerHTML = state.samples.length
+      ? state.samples.map((s, i) =>
+        '<div class="sample-item"><span>' + (i + 1) + ". " + s.avatarName + " · " + s.typeLabel +
+        "</span><button type='button' class='btn-sm' data-del='" + i + "' style='min-height:36px;font-size:13px;background:#fff;border:1px solid var(--line)'>删</button></div>"
+      ).join("")
+      : '<div style="font-size:12px;color:var(--muted)">尚未添加训练样本。建议覆盖正面、侧面、微笑、弱光。</div>';
+    $("sampleList").querySelectorAll("[data-del]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        pushHistory();
+        state.samples.splice(+btn.dataset.del, 1);
+        state.trained = false;
+        state.trainProgress = Math.min(state.trainProgress, state.samples.length * 12);
+        renderSamples();
+        updateTrainUI();
+        log("删除训练样本", "warn");
+      });
+    });
+  }
+
+  function updateTrainUI() {
+    $("trainFill").style.width = state.trainProgress + "%";
+    $("trainText").textContent = state.trained
+      ? "已训练（样本 " + state.samples.length + "）"
+      : (state.samples.length ? "样本 " + state.samples.length + "，待训练" : "未训练");
+    const before = state.stabilityBefore == null ? "—" : state.stabilityBefore.toFixed(0) + "%";
+    const after = state.stabilityAfter == null ? "—" : state.stabilityAfter.toFixed(0) + "%";
+    $("stabilityText").textContent = "稳定性：前 " + before + " / 后 " + after;
+  }
+
+  function renderSteps() {
+    document.querySelectorAll("#steps .step").forEach(el => {
+      const s = +el.dataset.step;
+      el.classList.toggle("on", state.pipelineStep === s);
+      el.classList.toggle("done", state.pipelineStep > s);
+    });
+    const names = ["采集图像", "人脸检测", "特征提取", "特征比较", "阈值判断"];
+    $("hudMode").textContent = "模式：" + (state.pipelineStep < 0 ? "待机" : names[Math.min(4, state.pipelineStep)]);
+  }
+
+  function renderPrivacy() {
+    $("pvConsent").checked = !!state.privacy.consent;
+    $("pvDays").value = state.privacy.days;
+    $("pvPurpose").value = state.privacy.purpose;
+    $("pvHuman").checked = !!state.privacy.human;
+  }
+
+  function renderMetrics() {
+    evaluateThresholdStats();
+    $("mFA").textContent = state.fa;
+    $("mFR").textContent = state.fr;
+    $("mPass").textContent = state.pass;
+    $("mTotal").textContent = state.totalTrials;
+    if (state.lastSim != null) $("mSim").textContent = state.lastSim.toFixed(1) + "%";
+    if (state.lastConf != null) $("mConf").textContent = state.lastConf.toFixed(1) + "%";
+  }
+
+  function renderChips() {
+    document.querySelectorAll("#bgChips .chip").forEach(c => c.classList.toggle("on", c.dataset.bg === state.bg));
+    document.querySelectorAll("[data-sample]").forEach(c => c.classList.toggle("on", c.dataset.sample === state.sampleType));
+    document.querySelectorAll("#livenessChips .chip").forEach(c => c.classList.toggle("on", !!state.liveness[c.dataset.live]));
+    document.querySelectorAll("#faultChips .chip").forEach(c => c.classList.toggle("on", !!state.faults[c.dataset.fault]));
+  }
+
+  function syncFeatureSliders() {
+    const av = selectedAvatar();
+    $("slEye").value = av.eye; $("outEye").textContent = av.eye;
+    $("slBrow").value = av.brow; $("outBrow").textContent = av.brow;
+    $("slNose").value = av.nose; $("outNose").textContent = av.nose;
+    $("slMouth").value = av.mouth; $("outMouth").textContent = av.mouth;
+    $("slFace").value = av.face; $("outFace").textContent = av.face;
+  }
+
+  function bindSlidersFromState() {
+    $("slAngle").value = state.angle; $("outAngle").textContent = state.angle;
+    $("slLight").value = state.light; $("outLight").textContent = state.light;
+    $("slOcc").value = state.occ; $("outOcc").textContent = state.occ;
+    $("slExpr").value = state.expr; $("outExpr").textContent = state.expr;
+    $("slClear").value = state.clear; $("outClear").textContent = state.clear;
+    $("slThr").value = state.threshold; $("outThr").textContent = state.threshold;
+    syncFeatureSliders();
+    renderPrivacy();
+    $("btnSpeed").textContent = "速度 ×" + state.speed;
+  }
+
+  function renderAll() {
+    renderAvatars();
+    renderTasks();
+    renderSamples();
+    renderFeatBars();
+    renderCompare();
+    renderRadar();
+    renderSteps();
+    renderMetrics();
+    renderChips();
+    updateTrainUI();
+    updateProgress();
+    renderLog();
+    drawScene();
+    refreshConditionStatus();
+  }
+
+  function refreshConditionStatus() {
+    const det = detectFace();
+    if (!det.ok) {
+      setStatus("err", "检测失败", (det.reasons || []).join("；") + "。请调整角度、光照或遮挡后重试。");
+      return;
+    }
+    if (state.faults.few || state.faults.light || state.faults.label || state.faults.thr) {
+      setStatus("warn", "存在故障注入", "请在右侧查看故障类型，按提示修复后再识别。");
+      return;
+    }
+    if (state.lastSim != null) {
+      const thr = effectiveThreshold();
+      if (state.lastSim >= thr) {
+        setStatus("ok", "识别通过", "相似度 " + state.lastSim.toFixed(1) + "% ≥ 阈值 " + thr + "%。AI 也可能误识，重要场景需人工复核。");
+      } else {
+        setStatus("warn", "未达阈值", "相似度 " + state.lastSim.toFixed(1) + "% < 阈值 " + thr + "%。可增加训练样本或适当降低阈值（注意误识）。");
+      }
+    }
+  }
+
+  /* ---------- Pipeline ---------- */
+  function stopPipeline() {
+    state.running = false;
+    if (pipelineTimer) { clearTimeout(pipelineTimer); pipelineTimer = null; }
+  }
+
+  function runPipelineStep() {
+    const names = ["采集", "检测", "提取", "比较", "判断"];
+    if (state.pipelineStep < 0) state.pipelineStep = 0;
+    else state.pipelineStep++;
+
+    if (state.pipelineStep > 4) {
+      stopPipeline();
+      state.pipelineStep = 4;
+      log("流程完成", "ok");
+      $("pipelineHint").textContent = "流程完成。可调节条件或阈值后再次运行。";
+      renderAll();
+      return;
+    }
+
+    const step = state.pipelineStep;
+    $("pipelineHint").textContent = "正在执行：" + names[step];
+
+    if (step === 0) {
+      log("采集虚拟画面（背景：" + state.bg + "）", "info");
+      markTask("detect");
+    } else if (step === 1) {
+      const det = detectFace();
+      if (det.ok) {
+        log("检测成功，置信区域分 " + det.score.toFixed(0), "ok");
+        markTask("detect");
+      } else {
+        log("检测失败：" + (det.reasons || []).join("；"), "err");
+        setStatus("err", "漏检", (det.reasons || []).join("；"));
+      }
+    } else if (step === 2) {
+      state.clickedFeat = state.clickedFeat || "eye";
+      log("特征提取完成 → 五维向量", "ok");
+      markTask("extract");
+    } else if (step === 3) {
+      renderCompare();
+      log("与特征库比较，相似度 " + (state.lastSim != null ? state.lastSim.toFixed(1) : "—") + "%", "info");
+      markTask("compare");
+    } else if (step === 4) {
+      renderCompare();
+      evaluateThresholdStats();
+      const thr = effectiveThreshold();
+      const pass = state.lastDetect && state.lastDetect.ok && state.lastSim >= thr;
+      log(pass ? "阈值判断：通过" : "阈值判断：拒绝/待核验", pass ? "ok" : "warn");
+      markTask("threshold");
+      if (Math.abs(state.angle) > 15 || state.light < 50 || state.occ > 20 || state.expr > 20 || state.clear < 70) {
+        markTask("condition");
+      }
+      if (!state.privacy.consent) {
+        setStatus("err", "未授权", "未获得同意不得使用人脸识别。请先在隐私控制台勾选同意。");
+      } else if (state.privacy.human && !pass) {
+        setStatus("warn", "转人工复核", "系统拒绝通行，建议保安/老师人工核验证件。");
+      }
+    }
+
+    renderAll();
+    if (state.running) {
+      const delay = 900 / state.speed;
+      pipelineTimer = setTimeout(runPipelineStep, delay);
+    }
+  }
+
+  function startPipeline() {
+    stopPipeline();
+    state.running = true;
+    state.pipelineStep = -1;
+    log("开始识别流程", "info");
+    runPipelineStep();
+  }
+
+  /* ---------- Training / faults / privacy ---------- */
+  const SAMPLE_LABELS = { front: "正面", left: "左侧", right: "右侧", smile: "微笑", dim: "弱光" };
+
+  function addSample() {
+    pushHistory();
+    const av = selectedAvatar();
+    const type = state.sampleType;
+    state.samples.push({
+      avatarId: av.id,
+      avatarName: av.name,
+      type: type,
+      typeLabel: SAMPLE_LABELS[type] || type,
+      angle: type === "left" ? -25 : type === "right" ? 25 : state.angle,
+      light: type === "dim" ? 30 : state.light,
+      expr: type === "smile" ? 50 : state.expr,
+      features: featVector(av)
+    });
+    state.trained = false;
+    state.trainProgress = Math.min(90, state.samples.length * 14);
+    log("添加样本：" + av.name + " / " + SAMPLE_LABELS[type], "ok");
+    markTask("train");
+    renderSamples();
+    updateTrainUI();
+    toast("已添加训练样本");
+  }
+
+  function measureStability() {
+    const saved = { angle: state.angle, light: state.light, occ: state.occ, expr: state.expr, clear: state.clear };
+    const trials = [
+      { angle: 0, light: 80, occ: 0, expr: 0, clear: 90 },
+      { angle: -20, light: 70, occ: 10, expr: 20, clear: 80 },
+      { angle: 25, light: 45, occ: 15, expr: 30, clear: 70 },
+      { angle: 10, light: 35, occ: 25, expr: 10, clear: 60 },
+      { angle: -30, light: 55, occ: 5, expr: 40, clear: 75 }
+    ];
+    let ok = 0;
+    const probe = selectedAvatar();
+    const gallery = state.avatars.find(a => a.gallery && a.id === probe.id) || state.avatars.find(a => a.gallery);
+    trials.forEach(t => {
+      Object.assign(state, t);
+      const det = detectFace();
+      if (!det.ok) return;
+      const { sim } = similarity(distortedFeatures(probe), featVector(gallery));
+      if (sim >= effectiveThreshold()) ok++;
+    });
+    Object.assign(state, saved);
+    return (ok / trials.length) * 100;
+  }
+
+  function doTrain() {
+    if (state.samples.length < 2) {
+      setStatus("warn", "样本不足", "至少添加 2 个不同条件样本再训练。可注入“样本过少”故障体验。");
+      toast("请先添加更多样本");
+      return;
+    }
+    pushHistory();
+    if (state.stabilityBefore == null) state.stabilityBefore = measureStability();
+    state.trainProgress = 100;
+    state.trained = true;
+    // diversity bonuses
+    const types = new Set(state.samples.map(s => s.type));
+    if (types.size >= 3) state.faults.few = false;
+    if (state.samples.some(s => s.type === "dim" || s.light < 40)) state.faults.light = false;
+    state.stabilityAfter = measureStability();
+    markTask("train");
+    log("模拟训练完成，稳定性 " + state.stabilityBefore.toFixed(0) + "% → " + state.stabilityAfter.toFixed(0) + "%", "ok");
+    setStatus("ok", "训练完成", "多样本覆盖角度与光照后，识别更稳定。请点击“对比稳定性”。");
+    updateTrainUI();
+    renderAll();
+    toast("训练完成");
+  }
+
+  function injectFault(key) {
+    pushHistory();
+    state.faults[key] = !state.faults[key];
+    if (state.faults[key]) {
+      if (key === "few") { state.samples = state.samples.slice(0, 1); state.trained = false; state.trainProgress = 20; }
+      if (key === "light") { state.samples = state.samples.filter(s => s.type !== "dim"); state.light = 85; state.trained = false; }
+      if (key === "thr") { state.threshold = 92; }
+      log("注入故障：" + key, "warn");
+      markTask("fault");
+    } else {
+      log("关闭故障：" + key, "info");
+    }
+    bindSlidersFromState();
+    renderAll();
+  }
+
+  function fixFaults() {
+    pushHistory();
+    const tips = [];
+    if (state.faults.few || state.samples.length < 3) {
+      ["front", "left", "smile", "dim"].forEach(t => {
+        state.sampleType = t;
+        const av = selectedAvatar();
+        state.samples.push({
+          avatarId: av.id, avatarName: av.name, type: t, typeLabel: SAMPLE_LABELS[t],
+          angle: t === "left" ? -25 : 0, light: t === "dim" ? 30 : 80, expr: t === "smile" ? 50 : 0,
+          features: featVector(av)
+        });
+      });
+      tips.push("已补充多角度/表情/弱光样本");
+      state.faults.few = false;
+    }
+    if (state.faults.light) {
+      tips.push("已加入弱光样本，避免单一光照");
+      state.faults.light = false;
+    }
+    if (state.faults.label) {
+      tips.push("已纠正特征库标签错位");
+      state.faults.label = false;
+    }
+    if (state.faults.thr || state.threshold > 88) {
+      state.threshold = 75;
+      state.faults.thr = false;
+      tips.push("阈值调回 75%，平衡误识与拒识");
+    }
+    state.trained = false;
+    doTrain();
+    markTask("fault");
+    setStatus("ok", "故障已修复", tips.join("；") || "当前无明显故障。");
+    bindSlidersFromState();
+    renderAll();
+  }
+
+  /* ---------- Report / storage ---------- */
+  function buildReport() {
+    return {
+      title: "人脸识别原理实验报告",
+      lesson: "第二单元第二节 · 教材 P42-49",
+      time: new Date().toISOString(),
+      selected: state.selectedId,
+      compare: state.compareId,
+      params: {
+        angle: state.angle, light: state.light, occlusion: state.occ,
+        expression: state.expr, clarity: state.clear, threshold: state.threshold, bg: state.bg
+      },
+      similarity: state.lastSim,
+      confidence: state.lastConf,
+      detection: state.lastDetect,
+      thresholdStats: { fa: state.fa, fr: state.fr, pass: state.pass, total: state.totalTrials },
+      samples: state.samples,
+      trained: state.trained,
+      stability: { before: state.stabilityBefore, after: state.stabilityAfter },
+      faults: state.faults,
+      liveness: { blink: state.liveness.blink, mouth: state.liveness.mouth, turn: state.liveness.turn },
+      privacy: state.privacy,
+      doneTasks: state.doneTasks,
+      logs: state.logs.slice(0, 30),
+      notes: [
+        "仅使用虚拟头像与合成特征，未采集真实人脸。",
+        "《人脸识别技术应用安全管理办法》自 2025-06-01 施行。",
+        "AI 可能误识或拒识，重要场景必须人工复核。"
+      ]
+    };
+  }
+
+  function reportAsText(r) {
+    return [
+      r.title, r.lesson, "时间：" + r.time, "",
+      "【参数】角度=" + r.params.angle + " 光照=" + r.params.light + " 遮挡=" + r.params.occlusion +
+        " 表情=" + r.params.expression + " 清晰度=" + r.params.clarity + " 阈值=" + r.params.threshold,
+      "【结果】相似度=" + r.similarity + " 置信度=" + r.confidence,
+      "【统计】误识=" + r.thresholdStats.fa + " 拒识=" + r.thresholdStats.fr +
+        " 通过=" + r.thresholdStats.pass + "/" + r.thresholdStats.total,
+      "【训练】样本数=" + r.samples.length + " 已训练=" + r.trained +
+        " 稳定性前=" + r.stability.before + " 后=" + r.stability.after,
+      "【隐私】同意=" + r.privacy.consent + " 期限=" + r.privacy.days + "天 用途=" + r.privacy.purpose +
+        " 人工复核=" + r.privacy.human,
+      "【任务完成】" + Object.keys(r.doneTasks).join(", "),
+      "", ...r.notes
+    ].join("\n");
+  }
+
+  function openExport() {
+    const r = buildReport();
+    state.reportTouched = true;
+    markTask("report");
+    $("reportOut").value = exportFormat === "json" ? JSON.stringify(r, null, 2) : reportAsText(r);
+    $("reportModal").classList.add("show");
+    log("生成实验报告（" + exportFormat + "）", "ok");
+  }
+
+  function saveLocal() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      toast("已保存到本机");
+      log("保存实验状态", "ok");
+    } catch (e) {
+      toast("保存失败：存储不可用");
+    }
+  }
+
+  function loadLocal() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+      state = Object.assign(defaultState(), data);
+      state.avatars = data.avatars || clone(DEMO_AVATARS);
+      bindSlidersFromState();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function clearLocal() {
+    localStorage.removeItem(STORAGE_KEY);
+    pushHistory();
+    state = defaultState();
+    bindSlidersFromState();
+    renderAll();
+    toast("已清除本机数据");
+    log("一键删除本机数据", "warn");
+    markTask("privacy");
+  }
+
+  /* ---------- Canvas hit test ---------- */
+  function onCanvasClick(ev) {
+    const rect = canvas.getBoundingClientRect();
+    const x = (ev.clientX - rect.left) / rect.width;
+    const y = (ev.clientY - rect.top) / rect.height;
+    const det = detectFace();
+    if (!det.ok || !det.box) {
+      setStatus("warn", "无法提取特征", "先让检测成功，再点击五官。");
+      return;
+    }
+    const bx = det.box.x, by = det.box.y, bw = det.box.w, bh = det.box.h;
+    const cx = bx + bw / 2, cy = by + bh * 0.48;
+    const relY = y - cy;
+    const relX = Math.abs(x - cx);
+    let feat = "face";
+    if (relY < -bh * 0.12) feat = "brow";
+    else if (relY < -bh * 0.02) feat = "eye";
+    else if (relY < bh * 0.12) feat = "nose";
+    else if (relY < bh * 0.28) feat = "mouth";
+    if (relX > bw * 0.28 && feat !== "face") feat = "face";
+    pushHistory();
+    state.clickedFeat = feat;
+    state.pipelineStep = Math.max(state.pipelineStep, 2);
+    const v = distortedFeatures(selectedAvatar())[feat];
+    $("featTip").textContent = FEAT_KEYS.find(f => f.key === feat).name + " → " + v.toFixed(1);
+    markTask("extract");
+    log("点击提取：" + feat + " = " + v.toFixed(1), "ok");
+    setStatus("info", "特征数值化", FEAT_KEYS.find(f => f.key === feat).name + " 已转为 " + v.toFixed(1));
+    renderAll();
+  }
+
+  /* ---------- Animation loop ---------- */
+  function tick() {
+    animT += 16 * state.speed;
+    if (state.liveness.blink) {
+      state.liveness._blinkPhase = Math.max(0, Math.sin(animT * 0.008));
+    }
+    if (state.liveness.mouth) {
+      state.liveness._mouthOpen = Math.abs(Math.sin(animT * 0.005)) > 0.3;
+    }
+    drawScene();
+    rafId = requestAnimationFrame(tick);
+  }
+
+  /* ---------- Bind UI ---------- */
+  function bindUI() {
+    $("btnSave").addEventListener("click", saveLocal);
+    $("btnExport").addEventListener("click", openExport);
+    $("btnImport").addEventListener("click", () => $("importFile").click());
+    $("importFile").addEventListener("change", (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const data = JSON.parse(reader.result);
+          pushHistory();
+          state = Object.assign(defaultState(), data);
+          if (data.params) Object.assign(state, data.params);
+          bindSlidersFromState();
+          renderAll();
+          toast("导入成功");
+          log("导入实验数据", "ok");
+        } catch (err) {
+          toast("导入失败：JSON 格式无效");
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    });
+    $("btnFullscreen").addEventListener("click", () => {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => toast("全屏不可用"));
+      else document.exitFullscreen();
+    });
+    $("btnUndo").addEventListener("click", undo);
+    $("btnRedo").addEventListener("click", redo);
+    $("btnReset").addEventListener("click", () => {
+      if (!confirm("确定重置为教材示例？当前未保存更改将丢失。")) return;
+      pushHistory();
+      state = defaultState();
+      bindSlidersFromState();
+      renderAll();
+      toast("已重置");
+      log("重置为教材示例", "warn");
+    });
+    $("btnHelp").addEventListener("click", () => $("helpModal").classList.add("show"));
+    $("btnCloseHelp").addEventListener("click", () => $("helpModal").classList.remove("show"));
+    $("btnViewState").addEventListener("click", () => {
+      $("helpModal").classList.remove("show");
+      exportFormat = "json";
+      openExport();
+      toast("当前状态已展示");
+    });
+    $("btnRestoreDemo").addEventListener("click", () => {
+      pushHistory();
+      state = defaultState();
+      // textbook-like demo preset
+      state.selectedId = "A1";
+      state.compareId = "A1";
+      state.threshold = 75;
+      state.samples = [
+        { avatarId: "A1", avatarName: "小安", type: "front", typeLabel: "正面", angle: 0, light: 80, expr: 0, features: featVector(getAvatar("A1")) },
+        { avatarId: "A1", avatarName: "小安", type: "left", typeLabel: "左侧", angle: -25, light: 80, expr: 0, features: featVector(getAvatar("A1")) },
+        { avatarId: "A1", avatarName: "小安", type: "smile", typeLabel: "微笑", angle: 0, light: 80, expr: 50, features: featVector(getAvatar("A1")) }
+      ];
+      bindSlidersFromState();
+      renderAll();
+      $("helpModal").classList.remove("show");
+      toast("已恢复教材示例");
+      log("恢复教材示例 FaceGroup1", "ok");
+    });
+
+    $("btnRun").addEventListener("click", startPipeline);
+    $("btnPause").addEventListener("click", () => { stopPipeline(); toast("已暂停"); log("暂停", "warn"); });
+    $("btnStep").addEventListener("click", () => { stopPipeline(); runPipelineStep(); });
+    $("btnSpeed").addEventListener("click", () => {
+      state.speed = state.speed === 1 ? 2 : state.speed === 2 ? 4 : 1;
+      $("btnSpeed").textContent = "速度 ×" + state.speed;
+    });
+    $("btnPipelineReset").addEventListener("click", () => {
+      stopPipeline();
+      state.pipelineStep = -1;
+      state.lastSim = null;
+      renderAll();
+      log("流程复位", "info");
+    });
+
+    canvas.addEventListener("click", onCanvasClick);
+
+    function bindRange(id, outId, key, onChange) {
+      $(id).addEventListener("input", () => {
+        const v = +$(id).value;
+        $(outId).textContent = v;
+        if (key.startsWith("feat:")) {
+          const fk = key.slice(5);
+          selectedAvatar()[fk] = v;
+        } else {
+          state[key] = v;
+        }
+        if (onChange) onChange();
+        if (key.startsWith("feat:")) renderAvatars();
+        renderFeatBars();
+        renderCompare();
+        renderRadar();
+        renderMetrics();
+        drawScene();
+        refreshConditionStatus();
+      });
+      $(id).addEventListener("change", () => {
+        pushHistory();
+        if (key === "threshold") markTask("threshold");
+        if (["angle", "light", "occ", "expr", "clear"].includes(key)) markTask("condition");
+        if (key.startsWith("feat:")) markTask("extract");
+      });
+    }
+    bindRange("slEye", "outEye", "feat:eye");
+    bindRange("slBrow", "outBrow", "feat:brow");
+    bindRange("slNose", "outNose", "feat:nose");
+    bindRange("slMouth", "outMouth", "feat:mouth");
+    bindRange("slFace", "outFace", "feat:face");
+    bindRange("slAngle", "outAngle", "angle");
+    bindRange("slLight", "outLight", "light");
+    bindRange("slOcc", "outOcc", "occ");
+    bindRange("slExpr", "outExpr", "expr");
+    bindRange("slClear", "outClear", "clear");
+    bindRange("slThr", "outThr", "threshold", () => {
+      evaluateThresholdStats();
+      $("mFA").textContent = state.fa;
+      $("mFR").textContent = state.fr;
+      $("mPass").textContent = state.pass;
+    });
+
+    document.querySelectorAll("#bgChips .chip").forEach(c => {
+      c.addEventListener("click", () => {
+        pushHistory();
+        state.bg = c.dataset.bg;
+        markTask("detect");
+        renderAll();
+        log("切换背景：" + state.bg, "info");
+      });
+    });
+    document.querySelectorAll("[data-sample]").forEach(c => {
+      c.addEventListener("click", () => {
+        state.sampleType = c.dataset.sample;
+        renderChips();
+      });
+    });
+    $("btnAddSample").addEventListener("click", addSample);
+    $("btnClearSamples").addEventListener("click", () => {
+      pushHistory();
+      state.samples = [];
+      state.trained = false;
+      state.trainProgress = 0;
+      renderSamples();
+      updateTrainUI();
+    });
+    $("btnTrain").addEventListener("click", doTrain);
+    $("btnCompareStab").addEventListener("click", () => {
+      if (state.stabilityBefore == null) state.stabilityBefore = measureStability();
+      if (state.trained) state.stabilityAfter = measureStability();
+      else state.stabilityAfter = state.stabilityBefore;
+      updateTrainUI();
+      markTask("train");
+      setStatus("info", "稳定性对比", "训练前 " + state.stabilityBefore.toFixed(0) + "% ，训练后 " +
+        (state.stabilityAfter != null ? state.stabilityAfter.toFixed(0) : "—") + "%。样本越多样，条件变化时越稳。");
+      log("稳定性对比完成", "ok");
+    });
+
+    document.querySelectorAll("#livenessChips .chip").forEach(c => {
+      c.addEventListener("click", () => {
+        pushHistory();
+        const k = c.dataset.live;
+        state.liveness[k] = !state.liveness[k];
+        $("livenessTip").textContent = "虚拟动作「" + c.textContent + "」" +
+          (state.liveness[k] ? "已模拟" : "已关闭") + "。活体检测用于防止照片/视频冒用，本实验不使用真实摄像头。";
+        log("活体动作：" + k + " = " + state.liveness[k], "info");
+        renderAll();
+      });
+    });
+    document.querySelectorAll("#faultChips .chip").forEach(c => {
+      c.addEventListener("click", () => injectFault(c.dataset.fault));
+    });
+    $("btnFixFault").addEventListener("click", fixFaults);
+
+    $("pvConsent").addEventListener("change", () => {
+      pushHistory();
+      state.privacy.consent = $("pvConsent").checked;
+      markTask("privacy");
+      log("隐私同意：" + state.privacy.consent, state.privacy.consent ? "ok" : "warn");
+      renderAll();
+    });
+    $("pvDays").addEventListener("change", () => {
+      pushHistory();
+      state.privacy.days = Math.max(1, Math.min(365, +$("pvDays").value || 30));
+      markTask("privacy");
+    });
+    $("pvPurpose").addEventListener("change", () => {
+      pushHistory();
+      state.privacy.purpose = $("pvPurpose").value;
+      markTask("privacy");
+      log("用途范围：" + state.privacy.purpose, "info");
+    });
+    $("pvHuman").addEventListener("change", () => {
+      pushHistory();
+      state.privacy.human = $("pvHuman").checked;
+      markTask("privacy");
+    });
+    $("btnDeleteAll").addEventListener("click", () => {
+      if (!confirm("确定删除本机保存的全部实验数据吗？")) return;
+      clearLocal();
+    });
+
+    $("exportJson").addEventListener("click", () => {
+      exportFormat = "json";
+      $("exportJson").classList.add("on");
+      $("exportText").classList.remove("on");
+      $("reportOut").value = JSON.stringify(buildReport(), null, 2);
+    });
+    $("exportText").addEventListener("click", () => {
+      exportFormat = "text";
+      $("exportText").classList.add("on");
+      $("exportJson").classList.remove("on");
+      $("reportOut").value = reportAsText(buildReport());
+    });
+    $("btnCopyReport").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText($("reportOut").value);
+        toast("已复制");
+      } catch (e) {
+        $("reportOut").select();
+        document.execCommand("copy");
+        toast("已复制");
+      }
+    });
+    $("btnDownloadReport").addEventListener("click", () => {
+      const blob = new Blob([$("reportOut").value], { type: "text/plain;charset=utf-8" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = "人脸识别原理实验报告." + (exportFormat === "json" ? "json" : "txt");
+      a.click();
+      URL.revokeObjectURL(a.href);
+      markTask("report");
+      toast("已下载报告");
+    });
+    $("btnCloseReport").addEventListener("click", () => $("reportModal").classList.remove("show"));
+
+    document.addEventListener("keydown", (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z") { e.preventDefault(); undo(); }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "y") { e.preventDefault(); redo(); }
+      if (e.key === "Escape") {
+        $("helpModal").classList.remove("show");
+        $("reportModal").classList.remove("show");
+      }
+    });
+  }
+
+  /* ---------- Init ---------- */
+  function init() {
+    bindUI();
+    const loaded = loadLocal();
+    bindSlidersFromState();
+    renderAll();
+    if (loaded) {
+      log("已恢复本机保存的实验", "ok");
+      toast("已恢复上次进度");
+    } else {
+      log("欢迎进入虚拟人脸特征匹配实验室", "info");
+      setStatus("info", "校园门禁场景", "选择 FaceGroup1 头像，点击运行，走完采集→检测→提取→比较→判断。");
+    }
+    rafId = requestAnimationFrame(tick);
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
